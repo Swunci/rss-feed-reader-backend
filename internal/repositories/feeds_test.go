@@ -215,7 +215,7 @@ func TestGetFeeds_FavoriteFilter(t *testing.T) {
 		{FeedID: feed.ID, Title: "Item 2", Link: "https://example.com/item2", Description: "desc", PublishedAt: time.Now()},
 	})
 
-	items, _ := itemRepo.GetItems(feed.ID, models.ItemFilter{})
+	items, _ := itemRepo.GetItems(feed.ID, models.ItemFilter{}, "")
 	itemRepo.UpdateFavorite(items[0].ID, true)
 
 	feeds, err := feedRepo.GetFeeds([]int{feed.ID}, models.FeedFilterFavorite)
@@ -436,7 +436,7 @@ func TestDeleteFeed_CascadesItems(t *testing.T) {
 		t.Fatalf("expected no error deleting feed, got %v", err)
 	}
 
-	remainingItems, err := itemRepo.GetItems(feed.ID, models.ItemFilter{})
+	remainingItems, err := itemRepo.GetItems(feed.ID, models.ItemFilter{}, "")
 	if err != nil {
 		t.Fatalf("expected no error fetching items, got %v", err)
 	}
