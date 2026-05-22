@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
 
 	"github.com/Swunci/rrs-feed-backend/internal/models"
 )
@@ -36,7 +37,7 @@ func (r *ItemRepo) CreateItems(feed_id int, items []models.Item) error {
 
 	for i, item := range items {
 		placeholders[i] = "(?, ?, ?, ?, ?)"
-		args = append(args, item.FeedID, item.Title, item.Link, item.Description, item.PublishedAt)
+		args = append(args, item.FeedID, item.Title, item.Link, item.Description, item.PublishedAt.UTC().Format(time.RFC3339))
 	}
 
 	query := fmt.Sprintf(`INSERT OR IGNORE INTO items (feed_id, title, link, description, published_at)
@@ -82,7 +83,7 @@ func (r *ItemRepo) GetItem(item_id int) (models.Item, error) {
 	return item, nil
 }
 
-func (r *ItemRepo) GetItems(feed_id int, filter models.ItemFilter) ([]models.Item, error) {
+func (r *ItemRepo) GetItems(feed_id int, filter models.ItemFilter, timestamp_cursor string) ([]models.Item, error) {
 	query := `SELECT * FROM items WHERE feed_id = ?`
 	args := []any{feed_id}
 	if filter.IsRead != nil {
@@ -94,8 +95,19 @@ func (r *ItemRepo) GetItems(feed_id int, filter models.ItemFilter) ([]models.Ite
 		args = append(args, *filter.IsFavorite)
 	}
 
+	if timestamp_cursor != "" {
+		timestamp, err := time.Parse(time.RFC3339, timestamp_cursor)
+		if err != nil {
+			r.logger.Error("Parse timestamp")
+		}
+		print(timestamp.String())
+		query += ` AND published_at < ?`
+		args = append(args, timestamp.UTC().Format(time.RFC3339))
+	}
+
 	query += ` ORDER BY published_at DESC`
 
+	query += ` LIMIT 20`
 	rows, err := r.readDB.Query(query, args...)
 	if err != nil {
 		return nil, err

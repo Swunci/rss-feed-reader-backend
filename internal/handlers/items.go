@@ -38,6 +38,7 @@ func (h *ItemHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 func (h *ItemHandler) GetItems(w http.ResponseWriter, r *http.Request) {
 	feed_id, err := ParseID(chi.URLParam(r, "feed_id"))
+	timestamp_cursor := r.URL.Query().Get("cursor")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		println(err.Error())
@@ -54,7 +55,8 @@ func (h *ItemHandler) GetItems(w http.ResponseWriter, r *http.Request) {
 		filter.IsFavorite = &is_favorite
 		h.logger.Info("Favorite filter", "feed_id", feed_id, "value", *filter.IsFavorite)
 	}
-	items, err := h.itemService.GetItems(feed_id, filter)
+
+	items, err := h.itemService.GetItems(feed_id, filter, timestamp_cursor)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

@@ -24,8 +24,8 @@ func (s *ItemService) GetItem(item_id int) (models.Item, error) {
 	return s.repository.GetItem(item_id)
 }
 
-func (s *ItemService) GetItems(feed_id int, filter models.ItemFilter) ([]models.Item, error) {
-	return s.repository.GetItems(feed_id, filter)
+func (s *ItemService) GetItems(feed_id int, filter models.ItemFilter, timestamp_cursor string) ([]models.Item, error) {
+	return s.repository.GetItems(feed_id, filter, timestamp_cursor)
 }
 
 func (s *ItemService) CreateItems(feed_id int, items []models.Item) error {
