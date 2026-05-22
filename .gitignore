@@ -1,0 +1,15 @@
+# Binaries
+*.exe
+bin/
+
+# Database
+*.db
+*.db-shm
+*.db-wal
+
+# Air temp files
+tmp/
+
+# IDE
+.vscode/
+.idea/
