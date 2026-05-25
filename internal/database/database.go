@@ -43,6 +43,12 @@ func Migrate(db *sql.DB) error {
 				polling_interval INTEGER NOT NULL DEFAULT 30 CHECK (polling_interval >= 5)
 			);
     	`},
+		{2, `CREATE INDEX IF NOT EXISTS idx_items_read_published 
+				ON items (is_read, published_at);
+			
+			CREATE INDEX IF NOT EXISTS idx_items_favorite_published 
+				ON items (is_favorite, published_at);`,
+		},
 	}
 
 	for _, m := range migrations {
