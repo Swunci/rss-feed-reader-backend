@@ -107,11 +107,10 @@ func (h *FeedHandler) RefreshFeed(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (h *FeedHandler) Put(w http.ResponseWriter, r *http.Request) {
+func (h *FeedHandler) Patch(w http.ResponseWriter, r *http.Request) {
 	var req models.FeedUpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
-		println(err.Error())
 		return
 	}
 	if err := h.feedService.UpdateFeed(req.ID, req.URL, req.Name); err != nil {

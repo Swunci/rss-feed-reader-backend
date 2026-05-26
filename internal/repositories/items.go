@@ -100,14 +100,13 @@ func (r *ItemRepo) GetItems(feed_id int, filter models.ItemFilter, timestamp_cur
 		if err != nil {
 			r.logger.Error("Parse timestamp")
 		}
-		print(timestamp.String())
 		query += ` AND published_at < ?`
 		args = append(args, timestamp.UTC().Format(time.RFC3339))
 	}
 
 	query += ` ORDER BY published_at DESC`
 
-	query += ` LIMIT 20`
+	query += ` LIMIT 50`
 	rows, err := r.readDB.Query(query, args...)
 	if err != nil {
 		return nil, err

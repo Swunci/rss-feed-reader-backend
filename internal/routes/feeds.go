@@ -13,7 +13,7 @@ func FeedRoutes(h *Handlers) chi.Router {
 	r.Post("/", h.Feed.Post)
 	r.Post("/refresh", h.Feed.RefreshFeeds)
 	r.Post("/{feed_id}/refresh", h.Feed.RefreshFeed)
-	r.Put("/", h.Feed.Put)
+	r.Patch("/{feed_id}", h.Feed.Patch)
 	r.Delete("/{feed_id}", h.Feed.Delete)
 
 	return r
