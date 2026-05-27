@@ -36,7 +36,7 @@ func (h *ItemHandler) Get(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, item)
 }
 
-func (h *ItemHandler) GetItems(w http.ResponseWriter, r *http.Request) {
+func (h *ItemHandler) GetItemsByFeed(w http.ResponseWriter, r *http.Request) {
 	feed_id, err := ParseID(chi.URLParam(r, "feed_id"))
 	timestamp_cursor := r.URL.Query().Get("cursor")
 	if err != nil {
@@ -44,19 +44,31 @@ func (h *ItemHandler) GetItems(w http.ResponseWriter, r *http.Request) {
 		println(err.Error())
 		return
 	}
-	filter := models.ItemFilter{}
-	is_read, err := strconv.ParseBool(r.URL.Query().Get("read"))
-	if err == nil {
-		filter.IsRead = &is_read
-		h.logger.Info("Read filter", "feed_id", feed_id, "value", *filter.IsRead)
-	}
-	is_favorite, err := strconv.ParseBool(r.URL.Query().Get("favorite"))
-	if err == nil {
-		filter.IsFavorite = &is_favorite
-		h.logger.Info("Favorite filter", "feed_id", feed_id, "value", *filter.IsFavorite)
-	}
+	filter := parseItemFilter(r)
+	h.logger.Info("Item filters", "feed_id", feed_id, "read", filter.IsRead, "favorite", filter.IsFavorite)
 
-	items, err := h.itemService.GetItems(feed_id, filter, timestamp_cursor)
+	items, err := h.itemService.GetItemsByFeed(feed_id, filter, timestamp_cursor)
+
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		println(err.Error())
+		return
+	}
+	h.logger.Info("Successful items retrieval", "num_of_items", len(items))
+	WriteJSON(w, http.StatusOK, items)
+}
+
+func (h *ItemHandler) GetItemsByCollection(w http.ResponseWriter, r *http.Request) {
+	collection_id, err := ParseID(chi.URLParam(r, "collection_id"))
+	timestamp_cursor := r.URL.Query().Get("cursor")
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	filter := parseItemFilter(r)
+	h.logger.Info("Item filters", "collection_id", collection_id, "read", filter.IsRead, "favorite", filter.IsFavorite)
+
+	items, err := h.itemService.GetItemsByCollection(collection_id, filter, timestamp_cursor)
 
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -124,4 +136,15 @@ func (h *ItemHandler) Post(w http.ResponseWriter, r *http.Request) {
 func (h *ItemHandler) Delete(w http.ResponseWriter, r *http.Request) {
 
 	w.Write([]byte("handler"))
+}
+
+func parseItemFilter(r *http.Request) models.ItemFilter {
+	filter := models.ItemFilter{}
+	if is_read, err := strconv.ParseBool(r.URL.Query().Get("read")); err == nil {
+		filter.IsRead = &is_read
+	}
+	if is_favorite, err := strconv.ParseBool(r.URL.Query().Get("favorite")); err == nil {
+		filter.IsFavorite = &is_favorite
+	}
+	return filter
 }

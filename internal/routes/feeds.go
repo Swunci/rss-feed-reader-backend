@@ -8,7 +8,7 @@ func FeedRoutes(h *Handlers) chi.Router {
 	r := chi.NewRouter()
 
 	r.Get("/", h.Feed.GetAll)
-	r.Get("/{feed_id}/items", h.Item.GetItems)
+	r.Get("/{feed_id}/items", h.Item.GetItemsByFeed)
 	r.Get("/{feed_id}", h.Feed.GetFeed)
 	r.Post("/", h.Feed.Post)
 	r.Post("/refresh", h.Feed.RefreshFeeds)

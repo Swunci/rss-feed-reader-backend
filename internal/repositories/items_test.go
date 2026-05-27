@@ -64,7 +64,7 @@ func TestCreateItems_DuplicateLink(t *testing.T) {
 		t.Fatalf("expected no error for duplicate, got %v", err)
 	}
 
-	result, err := repo.GetItems(feed.ID, models.ItemFilter{}, "")
+	result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -186,7 +186,7 @@ func TestGetItem_NotFound(t *testing.T) {
 	}
 }
 
-func TestGetItems(t *testing.T) {
+func TestGetItemsByFeed(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
@@ -202,7 +202,7 @@ func TestGetItems(t *testing.T) {
 		t.Fatalf("failed to create items: %v", err)
 	}
 
-	result, err := repo.GetItems(feed.ID, models.ItemFilter{}, "")
+	result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -211,14 +211,14 @@ func TestGetItems(t *testing.T) {
 	}
 }
 
-func TestGetItems_Empty(t *testing.T) {
+func TestGetItemsByFeed_Empty(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
 	repo := NewItemRepo(db, db, nil)
 
-	items, err := repo.GetItems(feed.ID, models.ItemFilter{}, "")
+	items, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -227,7 +227,7 @@ func TestGetItems_Empty(t *testing.T) {
 	}
 }
 
-func TestGetItems_FilterIsRead(t *testing.T) {
+func TestGetItemsByFeed_FilterIsRead(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
@@ -245,7 +245,7 @@ func TestGetItems_FilterIsRead(t *testing.T) {
 	repo.UpdateRead(id, true)
 
 	isRead := true
-	result, err := repo.GetItems(feed.ID, models.ItemFilter{IsRead: &isRead}, "")
+	result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{IsRead: &isRead}, "")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -257,7 +257,7 @@ func TestGetItems_FilterIsRead(t *testing.T) {
 	}
 }
 
-func TestGetItems_FilterIsUnread(t *testing.T) {
+func TestGetItemsByFeed_FilterIsUnread(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
@@ -275,7 +275,7 @@ func TestGetItems_FilterIsUnread(t *testing.T) {
 	repo.UpdateRead(id, true)
 
 	isRead := false
-	result, err := repo.GetItems(feed.ID, models.ItemFilter{IsRead: &isRead}, "")
+	result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{IsRead: &isRead}, "")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -287,7 +287,7 @@ func TestGetItems_FilterIsUnread(t *testing.T) {
 	}
 }
 
-func TestGetItems_FilterIsFavorite(t *testing.T) {
+func TestGetItemsByFeed_FilterIsFavorite(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
@@ -305,7 +305,7 @@ func TestGetItems_FilterIsFavorite(t *testing.T) {
 	repo.UpdateFavorite(id, true)
 
 	isFavorite := true
-	result, err := repo.GetItems(feed.ID, models.ItemFilter{IsFavorite: &isFavorite}, "")
+	result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{IsFavorite: &isFavorite}, "")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -317,7 +317,7 @@ func TestGetItems_FilterIsFavorite(t *testing.T) {
 	}
 }
 
-func TestGetItems_FilterIsNotFavorite(t *testing.T) {
+func TestGetItemsByFeed_FilterIsNotFavorite(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
@@ -335,7 +335,7 @@ func TestGetItems_FilterIsNotFavorite(t *testing.T) {
 	repo.UpdateFavorite(id, true)
 
 	isFavorite := false
-	result, err := repo.GetItems(feed.ID, models.ItemFilter{IsFavorite: &isFavorite}, "")
+	result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{IsFavorite: &isFavorite}, "")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -347,7 +347,7 @@ func TestGetItems_FilterIsNotFavorite(t *testing.T) {
 	}
 }
 
-func TestGetItems_FilterReadAndFavorite(t *testing.T) {
+func TestGetItemsByFeed_FilterReadAndFavorite(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
@@ -373,7 +373,7 @@ func TestGetItems_FilterReadAndFavorite(t *testing.T) {
 
 	isRead := true
 	isFavorite := true
-	result, err := repo.GetItems(feed.ID, models.ItemFilter{IsRead: &isRead, IsFavorite: &isFavorite}, "")
+	result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{IsRead: &isRead, IsFavorite: &isFavorite}, "")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -385,7 +385,7 @@ func TestGetItems_FilterReadAndFavorite(t *testing.T) {
 	}
 }
 
-func TestGetItems_Cursor(t *testing.T) {
+func TestGetItemsByFeed_Cursor(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
@@ -403,7 +403,7 @@ func TestGetItems_Cursor(t *testing.T) {
 	repo.CreateItems(feed.ID, items)
 
 	t.Run("no cursor returns all items in desc order", func(t *testing.T) {
-		result, err := repo.GetItems(feed.ID, models.ItemFilter{}, "")
+		result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
@@ -417,7 +417,7 @@ func TestGetItems_Cursor(t *testing.T) {
 
 	t.Run("cursor returns only items older than cursor", func(t *testing.T) {
 		cursor := now.Add(-1 * time.Hour).Format(time.RFC3339)
-		result, err := repo.GetItems(feed.ID, models.ItemFilter{}, cursor)
+		result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, cursor)
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
@@ -431,7 +431,7 @@ func TestGetItems_Cursor(t *testing.T) {
 
 	t.Run("cursor does not include exact timestamp", func(t *testing.T) {
 		cursor := now.Add(-2 * time.Hour).Format(time.RFC3339)
-		result, err := repo.GetItems(feed.ID, models.ItemFilter{}, cursor)
+		result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, cursor)
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
@@ -444,7 +444,7 @@ func TestGetItems_Cursor(t *testing.T) {
 
 	t.Run("cursor at oldest returns empty", func(t *testing.T) {
 		cursor := now.Add(-4 * time.Hour).Format(time.RFC3339)
-		result, err := repo.GetItems(feed.ID, models.ItemFilter{}, cursor)
+		result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, cursor)
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
@@ -460,7 +460,7 @@ func TestGetItems_Cursor(t *testing.T) {
 
 		cursor := now.Format(time.RFC3339)
 		isRead := true
-		result, err := repo.GetItems(feed.ID, models.ItemFilter{IsRead: &isRead}, cursor)
+		result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{IsRead: &isRead}, cursor)
 		if err != nil {
 			t.Fatalf("expected no error, got %v", err)
 		}
@@ -804,7 +804,7 @@ func TestDeleteItem(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	result, err := repo.GetItems(feed.ID, models.ItemFilter{}, "")
+	result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

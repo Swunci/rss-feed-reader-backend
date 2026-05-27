@@ -12,5 +12,7 @@ func CollectionRoutes(h *Handlers) chi.Router {
 	r.Put("/{collection_id}", h.Collection.Put)
 	r.Delete("/{collection_id}", h.Collection.Delete)
 
+	r.Get("/{collection_id}/items", h.Item.GetItemsByCollection)
+
 	return r
 }

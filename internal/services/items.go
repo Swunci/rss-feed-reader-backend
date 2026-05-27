@@ -24,8 +24,12 @@ func (s *ItemService) GetItem(item_id int) (models.Item, error) {
 	return s.repository.GetItem(item_id)
 }
 
-func (s *ItemService) GetItems(feed_id int, filter models.ItemFilter, timestamp_cursor string) ([]models.Item, error) {
-	return s.repository.GetItems(feed_id, filter, timestamp_cursor)
+func (s *ItemService) GetItemsByFeed(feed_id int, filter models.ItemFilter, timestamp_cursor string) ([]models.Item, error) {
+	return s.repository.GetItemsByFeed(feed_id, filter, timestamp_cursor)
+}
+
+func (s *ItemService) GetItemsByCollection(collection_id int, filter models.ItemFilter, timestamp_cursor string) ([]models.Item, error) {
+	return s.repository.GetItemsByCollection(collection_id, filter, timestamp_cursor)
 }
 
 func (s *ItemService) CreateItems(feed_id int, items []models.Item) error {

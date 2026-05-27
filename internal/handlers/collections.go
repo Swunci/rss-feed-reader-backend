@@ -4,8 +4,8 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/Swunci/rrs-feed-backend/internal/models"
-	"github.com/Swunci/rrs-feed-backend/internal/services"
+	"github.com/Swunci/rss-feed-backend/internal/models"
+	"github.com/Swunci/rss-feed-backend/internal/services"
 	"github.com/go-chi/chi/v5"
 )
 
