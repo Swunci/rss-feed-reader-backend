@@ -11,6 +11,46 @@ import (
 	"github.com/Swunci/rss-feed-backend/internal/models"
 )
 
+func createTestFeed(t *testing.T, db *sql.DB) models.Feed {
+	result, err := db.Exec("INSERT INTO feeds (url, name) VALUES (?, ?)", "https://example.com/feed", "Example")
+	if err != nil {
+		t.Fatalf("failed to create test feed: %v", err)
+	}
+	id, _ := result.LastInsertId()
+	return models.Feed{ID: int(id), URL: "https://example.com/feed", Name: "Example"}
+}
+
+func createTestItem(t *testing.T, db *sql.DB) int {
+	result, err := db.Exec(`INSERT INTO feeds (url, name) VALUES ('https://example.com/feed.xml', "Example")`)
+	if err != nil {
+		t.Fatalf("failed to insert test feed: %v", err)
+	}
+	id, _ := result.LastInsertId()
+	result, err = db.Exec(`INSERT INTO items (feed_id, title, link) VALUES (?, 'Test Item', 'https://example.com/item')`, id)
+	if err != nil {
+		t.Fatalf("failed to insert test item: %v", err)
+	}
+	return int(id)
+}
+
+func createTestCollection(t *testing.T, db *sql.DB) models.Collection {
+	result, err := db.Exec("INSERT INTO collections (name) VALUES (?)", "Test Collection")
+	if err != nil {
+		t.Fatalf("failed to create test collection: %v", err)
+	}
+	id, _ := result.LastInsertId()
+	return models.Collection{ID: int(id), Name: "Test Collection"}
+}
+
+func createTestFeedWithCollection(t *testing.T, db *sql.DB, collectionID int, url string) models.Feed {
+	result, err := db.Exec("INSERT INTO feeds (url, name, collection_id) VALUES (?, ?, ?)", url, "Example", collectionID)
+	if err != nil {
+		t.Fatalf("failed to create test feed: %v", err)
+	}
+	id, _ := result.LastInsertId()
+	return models.Feed{ID: int(id), URL: url, Name: "Example", CollectionID: &collectionID}
+}
+
 func TestCreateItems(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
@@ -71,28 +111,6 @@ func TestCreateItems_DuplicateLink(t *testing.T) {
 	if len(result) != 1 {
 		t.Errorf("expected 1 item after duplicate insert, got %d", len(result))
 	}
-}
-
-func createTestFeed(t *testing.T, db *sql.DB) models.Feed {
-	result, err := db.Exec("INSERT INTO feeds (url, name) VALUES (?, ?)", "https://example.com/feed", "Example")
-	if err != nil {
-		t.Fatalf("failed to create test feed: %v", err)
-	}
-	id, _ := result.LastInsertId()
-	return models.Feed{ID: int(id), URL: "https://example.com/feed", Name: "Example"}
-}
-
-func createTestItem(t *testing.T, db *sql.DB) int {
-	result, err := db.Exec(`INSERT INTO feeds (url, name) VALUES ('https://example.com/feed.xml', "Example")`)
-	if err != nil {
-		t.Fatalf("failed to insert test feed: %v", err)
-	}
-	id, _ := result.LastInsertId()
-	result, err = db.Exec(`INSERT INTO items (feed_id, title, link) VALUES (?, 'Test Item', 'https://example.com/item')`, id)
-	if err != nil {
-		t.Fatalf("failed to insert test item: %v", err)
-	}
-	return int(id)
 }
 
 func TestGetItem(t *testing.T) {
@@ -471,6 +489,37 @@ func TestGetItemsByFeed_Cursor(t *testing.T) {
 			t.Errorf("expected 'Middle', got %s", result[0].Title)
 		}
 	})
+}
+
+func TestGetItemsByCollection(t *testing.T) {
+	db := database.SetupTestDB(t)
+	defer db.Close()
+
+	collection := createTestCollection(t, db)
+	feed1 := createTestFeedWithCollection(t, db, collection.ID, "https://example.com/feed1")
+	feed2 := createTestFeedWithCollection(t, db, collection.ID, "https://example.com/feed2")
+	repo := NewItemRepo(db, db, nil)
+
+	items := []models.Item{
+		{FeedID: feed1.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
+		{FeedID: feed2.ID, Title: "Item 2", Link: "https://example.com/2", PublishedAt: time.Now().UTC()},
+	}
+	err := repo.CreateItems(feed1.ID, []models.Item{items[0]})
+	if err != nil {
+		t.Fatalf("failed to create items: %v", err)
+	}
+	err = repo.CreateItems(feed2.ID, []models.Item{items[1]})
+	if err != nil {
+		t.Fatalf("failed to create items: %v", err)
+	}
+
+	result, err := repo.GetItemsByCollection(collection.ID, models.ItemFilter{}, "")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if len(result) != 2 {
+		t.Errorf("expected 2 items, got %d", len(result))
+	}
 }
 
 func TestGetUnreadItemsFeedIds_ReturnsFeedIds(t *testing.T) {
