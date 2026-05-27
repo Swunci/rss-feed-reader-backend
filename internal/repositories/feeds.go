@@ -35,7 +35,7 @@ func (r *FeedRepo) CreateFeed(url, name string) (models.Feed, error) {
 	}
 	var feed models.Feed
 	err = r.writeDB.QueryRow("SELECT id, url, name FROM feeds WHERE url = ?", url).
-		Scan(&feed.ID, &feed.URL, &feed.Name)
+		Scan(&feed.ID, &feed.URL, &feed.Name, &feed.CollectionID)
 	if err != nil {
 		r.writeDB.Exec("ROLLBACK")
 		return models.Feed{}, err
@@ -55,6 +55,7 @@ func (r *FeedRepo) GetFeed(feed_id int) (models.Feed, error) {
 		&feed.ID,
 		&feed.URL,
 		&feed.Name,
+		&feed.CollectionID,
 	)
 	if err != nil {
 		return models.Feed{}, err
@@ -72,7 +73,7 @@ func (r *FeedRepo) GetAllFeeds() ([]models.Feed, error) {
 	var feeds = []models.Feed{}
 	for rows.Next() {
 		var feed models.Feed
-		err := rows.Scan(&feed.ID, &feed.URL, &feed.Name)
+		err := rows.Scan(&feed.ID, &feed.URL, &feed.Name, &feed.CollectionID)
 		if err != nil {
 			return nil, err
 		}
@@ -96,7 +97,7 @@ func (r *FeedRepo) GetAllFeedsWithCount() ([]models.FeedResponse, error) {
 	var feeds = []models.FeedResponse{}
 	for rows.Next() {
 		var feed models.FeedResponse
-		err := rows.Scan(&feed.ID, &feed.URL, &feed.Name, &feed.Count)
+		err := rows.Scan(&feed.ID, &feed.URL, &feed.Name, &feed.CollectionID, &feed.Count)
 		if err != nil {
 			return nil, err
 		}
@@ -129,7 +130,7 @@ func (r *FeedRepo) GetFeeds(feed_ids []int, filter models.FeedFilter) ([]models.
 	var feeds = []models.FeedResponse{}
 	for rows.Next() {
 		var feed models.FeedResponse
-		err := rows.Scan(&feed.ID, &feed.URL, &feed.Name, &feed.Count)
+		err := rows.Scan(&feed.ID, &feed.URL, &feed.Name, &feed.CollectionID, &feed.Count)
 		if err != nil {
 			return nil, err
 		}

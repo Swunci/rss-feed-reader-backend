@@ -9,6 +9,7 @@ bin/
 
 # Air temp files
 tmp/
+.air.toml
 
 # IDE
 .vscode/

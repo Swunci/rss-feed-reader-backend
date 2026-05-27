@@ -47,8 +47,17 @@ func Migrate(db *sql.DB) error {
 				ON items (is_read, published_at);
 			
 			CREATE INDEX IF NOT EXISTS idx_items_favorite_published 
-				ON items (is_favorite, published_at);`,
-		},
+				ON items (is_favorite, published_at
+			);
+		`},
+		{3, `CREATE TABLE collections (
+  				id   INTEGER PRIMARY KEY AUTOINCREMENT,
+  				name TEXT NOT NULL UNIQUE
+			);
+
+			ALTER TABLE feeds
+  				ADD COLUMN collection_id INTEGER REFERENCES collections(id) ON DELETE SET NULL;
+		`},
 	}
 
 	for _, m := range migrations {

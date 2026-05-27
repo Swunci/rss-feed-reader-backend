@@ -52,6 +52,7 @@ func NewApp() *App {
 
 	feedRepo := repositories.NewFeedRepo(readDB, writeDB, logger)
 	itemRepo := repositories.NewItemRepo(readDB, writeDB, logger)
+	collectionRepo := repositories.NewCollectionRepo(readDB, writeDB, logger)
 
 	db_table_err := database.Migrate(writeDB)
 	if db_table_err != nil {
@@ -62,12 +63,14 @@ func NewApp() *App {
 
 	feedService := services.NewFeedService(feedRepo, itemRepo, logger)
 	itemService := services.NewItemService(itemRepo)
+	collectionService := services.NewCollectionService(collectionRepo)
 	pollingService := services.NewPollingService(feedRepo, itemRepo, logger, itemSEEChannel)
 
 	handlers := routes.Handlers{
-		Item:    handlers.NewItemHandler(itemService, logger),
-		ItemSEE: handlers.NewItemSSEHandler(itemSEEChannel),
-		Feed:    handlers.NewFeedHandler(feedService, pollingService),
+		Item:       handlers.NewItemHandler(itemService, logger),
+		ItemSEE:    handlers.NewItemSSEHandler(itemSEEChannel),
+		Feed:       handlers.NewFeedHandler(feedService, pollingService),
+		Collection: handlers.NewCollectionHandler(collectionService),
 	}
 
 	router := routes.MainRouter(&handlers)

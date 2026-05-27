@@ -8,9 +8,10 @@ import (
 )
 
 type Handlers struct {
-	Item    *handlers.ItemHandler
-	ItemSEE *handlers.ItemSSEHandler
-	Feed    *handlers.FeedHandler
+	Item       *handlers.ItemHandler
+	ItemSEE    *handlers.ItemSSEHandler
+	Feed       *handlers.FeedHandler
+	Collection *handlers.CollectionHandler
 }
 
 func MainRouter(h *Handlers) http.Handler {
@@ -18,6 +19,7 @@ func MainRouter(h *Handlers) http.Handler {
 
 	r.Mount("/feeds", FeedRoutes(h))
 	r.Mount("/items", ItemRoutes(h))
+	r.Mount("/collections", CollectionRoutes(h))
 
 	return r
 }
