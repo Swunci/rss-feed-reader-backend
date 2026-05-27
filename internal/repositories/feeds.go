@@ -34,7 +34,7 @@ func (r *FeedRepo) CreateFeed(url, name string) (models.Feed, error) {
 		return models.Feed{}, err
 	}
 	var feed models.Feed
-	err = r.writeDB.QueryRow("SELECT id, url, name FROM feeds WHERE url = ?", url).
+	err = r.writeDB.QueryRow("SELECT * FROM feeds WHERE url = ?", url).
 		Scan(&feed.ID, &feed.URL, &feed.Name, &feed.CollectionID)
 	if err != nil {
 		r.writeDB.Exec("ROLLBACK")
@@ -42,7 +42,6 @@ func (r *FeedRepo) CreateFeed(url, name string) (models.Feed, error) {
 	}
 	_, err = r.writeDB.Exec("COMMIT")
 	return feed, err
-
 }
 
 func (r *FeedRepo) GetFeed(feed_id int) (models.Feed, error) {
@@ -84,7 +83,7 @@ func (r *FeedRepo) GetAllFeeds() ([]models.Feed, error) {
 
 func (r *FeedRepo) GetAllFeedsWithCount() ([]models.FeedResponse, error) {
 	rows, err := r.readDB.Query(`
-		SELECT feeds.id, feeds.url, feeds.name, COUNT(items.id) as count
+		SELECT feeds.id, feeds.url, feeds.name, feeds.collection_id, COUNT(items.id) as count
 		FROM feeds
 		LEFT JOIN items ON items.feed_id = feeds.id
 		GROUP BY feeds.id
@@ -113,7 +112,7 @@ func (r *FeedRepo) GetFeeds(feed_ids []int, filter models.FeedFilter) ([]models.
 	}
 
 	query := fmt.Sprintf(`
-		SELECT feeds.id, feeds.url, feeds.name, COUNT(items.id) as count
+		SELECT feeds.id, feeds.url, feeds.name, feeds.collection_id, COUNT(items.id) as count
 		FROM feeds
 		LEFT JOIN items ON items.feed_id = feeds.id AND %s
 		WHERE feeds.id IN (%s)
