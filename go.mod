@@ -1,4 +1,4 @@
-module github.com/Swunci/rrs-feed-backend
+module github.com/Swunci/rss-feed-backend
 
 go 1.26.2
 

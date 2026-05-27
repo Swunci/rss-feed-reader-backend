@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"log/slog"
 
-	"github.com/Swunci/rrs-feed-backend/internal/models"
+	"github.com/Swunci/rss-feed-backend/internal/models"
 )
 
 type CollectionRepo struct {

@@ -1,8 +1,8 @@
 package services
 
 import (
-	"github.com/Swunci/rrs-feed-backend/internal/models"
-	"github.com/Swunci/rrs-feed-backend/internal/repositories"
+	"github.com/Swunci/rss-feed-backend/internal/models"
+	"github.com/Swunci/rss-feed-backend/internal/repositories"
 )
 
 type ItemRepository interface {

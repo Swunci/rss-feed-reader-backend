@@ -9,11 +9,11 @@ import (
 	"github.com/rs/cors"
 	_ "modernc.org/sqlite"
 
-	"github.com/Swunci/rrs-feed-backend/internal/database"
-	"github.com/Swunci/rrs-feed-backend/internal/handlers"
-	"github.com/Swunci/rrs-feed-backend/internal/repositories"
-	"github.com/Swunci/rrs-feed-backend/internal/routes"
-	"github.com/Swunci/rrs-feed-backend/internal/services"
+	"github.com/Swunci/rss-feed-backend/internal/database"
+	"github.com/Swunci/rss-feed-backend/internal/handlers"
+	"github.com/Swunci/rss-feed-backend/internal/repositories"
+	"github.com/Swunci/rss-feed-backend/internal/routes"
+	"github.com/Swunci/rss-feed-backend/internal/services"
 )
 
 type App struct {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/Swunci/rrs-feed-backend/internal/app"
+	"github.com/Swunci/rss-feed-backend/internal/app"
 )
 
 func main() {

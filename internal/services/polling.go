@@ -6,7 +6,7 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/Swunci/rrs-feed-backend/internal/models"
+	"github.com/Swunci/rss-feed-backend/internal/models"
 
 	"github.com/mmcdole/gofeed"
 )

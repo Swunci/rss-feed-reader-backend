@@ -3,7 +3,7 @@ package routes
 import (
 	"net/http"
 
-	"github.com/Swunci/rrs-feed-backend/internal/handlers"
+	"github.com/Swunci/rss-feed-backend/internal/handlers"
 	"github.com/go-chi/chi/v5"
 )
 

@@ -7,8 +7,8 @@ import (
 
 	_ "modernc.org/sqlite"
 
-	"github.com/Swunci/rrs-feed-backend/internal/database"
-	"github.com/Swunci/rrs-feed-backend/internal/models"
+	"github.com/Swunci/rss-feed-backend/internal/database"
+	"github.com/Swunci/rss-feed-backend/internal/models"
 )
 
 func TestCreateItems(t *testing.T) {
