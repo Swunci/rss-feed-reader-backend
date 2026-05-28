@@ -27,10 +27,6 @@ func (r *ItemRepo) CreateItems(feed_id int, items []models.Item) error {
 	if len(items) == 0 {
 		return nil
 	}
-	_, err := r.writeDB.Exec("BEGIN IMMEDIATE")
-	if err != nil {
-		return err
-	}
 
 	placeholders := make([]string, len(items))
 	args := make([]any, 0, len(items)*5)
@@ -45,13 +41,11 @@ func (r *ItemRepo) CreateItems(feed_id int, items []models.Item) error {
 	)
 	res, err := r.writeDB.Exec(query, args...)
 	if err != nil {
-		r.writeDB.Exec("ROLLBACK")
 		return err
 	}
 
 	count, err := res.RowsAffected()
 	if err != nil {
-		r.writeDB.Exec("ROLLBACK")
 		return err
 	}
 
@@ -230,28 +224,14 @@ func (r *ItemRepo) GetFavoriteItemsFeedIds() ([]int, error) {
 }
 
 func (r *ItemRepo) UpdateRead(item_id int, is_read bool) error {
-	_, err := r.writeDB.Exec("BEGIN IMMEDIATE")
-	if err != nil {
-		return err
-	}
-	_, err = r.writeDB.Exec(
+	_, err := r.writeDB.Exec(
 		"UPDATE items SET is_read = ? WHERE id = ?", is_read, item_id,
 	)
 	r.logger.Info("Marked as read/unread", "id", item_id, "is_read", is_read)
-
-	if err != nil {
-		r.writeDB.Exec("ROLLBACK")
-		return err
-	}
-	_, err = r.writeDB.Exec("COMMIT")
 	return err
 }
 
 func (r *ItemRepo) UpdateReadMultiple(item_ids []int, is_read bool) error {
-	_, err := r.writeDB.Exec("BEGIN IMMEDIATE")
-	if err != nil {
-		return err
-	}
 	placeholders := make([]string, len(item_ids))
 	args := make([]any, len(item_ids)+1)
 	args[0] = is_read
@@ -265,48 +245,22 @@ func (r *ItemRepo) UpdateReadMultiple(item_ids []int, is_read bool) error {
 		strings.Join(placeholders, ","),
 	)
 
-	_, err = r.writeDB.Exec(query, args...)
-
-	if err != nil {
-		r.writeDB.Exec("ROLLBACK")
-		return err
-	}
-	_, err = r.writeDB.Exec("COMMIT")
+	_, err := r.writeDB.Exec(query, args...)
 	return err
 }
 
 func (r *ItemRepo) UpdateFavorite(item_id int, is_favorite bool) error {
-	_, err := r.writeDB.Exec("BEGIN IMMEDIATE")
-	if err != nil {
-		return err
-	}
-	_, err = r.writeDB.Exec(
+	_, err := r.writeDB.Exec(
 		"UPDATE items SET is_favorite = ? WHERE id = ?", is_favorite, item_id,
 	)
 	r.logger.Info("Favorite/unfavorite", "id", item_id, "is_favorite", is_favorite)
-
-	if err != nil {
-		r.writeDB.Exec("ROLLBACK")
-		return err
-	}
-	_, err = r.writeDB.Exec("COMMIT")
 	return err
 }
 
 func (r *ItemRepo) DeleteItem(item_id int) error {
-	_, err := r.writeDB.Exec("BEGIN IMMEDIATE")
-	if err != nil {
-		return err
-	}
-
-	_, err = r.writeDB.Exec(
+	_, err := r.writeDB.Exec(
 		"DELETE FROM items WHERE id = ?",
 		item_id,
 	)
-	if err != nil {
-		r.writeDB.Exec("ROLLBACK")
-		return err
-	}
-	_, err = r.writeDB.Exec("COMMIT")
 	return err
 }

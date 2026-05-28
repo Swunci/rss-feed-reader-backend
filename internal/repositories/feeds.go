@@ -138,39 +138,21 @@ func (r *FeedRepo) GetFeeds(feed_ids []int, filter models.FeedFilter) ([]models.
 	return feeds, nil
 }
 
-func (r *FeedRepo) UpdateFeed(feed_id int, url, name *string) error {
-	_, err := r.writeDB.Exec("BEGIN IMMEDIATE")
-	if err != nil {
-		return err
-	}
-	_, err = r.writeDB.Exec(`
+func (r *FeedRepo) UpdateFeed(feed_id int, url, name *string, collection_id *int) error {
+	_, err := r.writeDB.Exec(`
         UPDATE feeds SET
 			url = COALESCE(?, url),
-            name = COALESCE(?, name)
+            name = COALESCE(?, name),
+			collection_id = COALESCE(?, collection_id)
         WHERE id = ?
-    `, url, name, feed_id)
-
-	if err != nil {
-		r.writeDB.Exec("ROLLBACK")
-		return err
-	}
-	_, err = r.writeDB.Exec("COMMIT")
+    `, url, name, collection_id, feed_id)
 	return err
 }
 
 func (r *FeedRepo) DeleteFeed(feed_id int) error {
-	_, err := r.writeDB.Exec("BEGIN IMMEDIATE")
-	if err != nil {
-		return err
-	}
-	_, err = r.writeDB.Exec(
+	_, err := r.writeDB.Exec(
 		"DELETE FROM feeds WHERE id = ?",
 		feed_id,
 	)
-	if err != nil {
-		r.writeDB.Exec("ROLLBACK")
-		return err
-	}
-	_, err = r.writeDB.Exec("COMMIT")
 	return err
 }

@@ -73,8 +73,8 @@ func (s *FeedService) CreateFeed(url string) (models.Feed, error) {
 	return s.feedRepo.CreateFeed(url, parsed.Title)
 }
 
-func (s *FeedService) UpdateFeed(feed_id int, url, name *string) error {
-	return s.feedRepo.UpdateFeed(feed_id, url, name)
+func (s *FeedService) UpdateFeed(feed_id int, url, name *string, collection_id *int) error {
+	return s.feedRepo.UpdateFeed(feed_id, url, name, collection_id)
 }
 
 func (s *FeedService) DeleteFeed(feed_id int) error {

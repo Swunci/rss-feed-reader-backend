@@ -272,7 +272,7 @@ func TestUpdateFeed(t *testing.T) {
 		t.Fatalf("expected no error creating feed, got %v", err)
 	}
 
-	err = repo.UpdateFeed(original_feed.ID, &newURL, &newName)
+	err = repo.UpdateFeed(original_feed.ID, &newURL, &newName, nil)
 	if err != nil {
 		t.Fatalf("expected no error updating feed, got %v", err)
 	}
@@ -297,7 +297,7 @@ func TestUpdateFeed_NotFound(t *testing.T) {
 	repo := NewFeedRepo(db, db, nil)
 
 	newName := "New Name"
-	err := repo.UpdateFeed(999, nil, &newName)
+	err := repo.UpdateFeed(999, nil, &newName, nil)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -318,7 +318,7 @@ func TestUpdateFeed_PartialUpdate(t *testing.T) {
 		t.Fatalf("expected no error with createFeed, got %v", err)
 	}
 
-	err = repo.UpdateFeed(feed.ID, nil, &newName)
+	err = repo.UpdateFeed(feed.ID, nil, &newName, nil)
 	if err != nil {
 		t.Fatalf("expected no error with UpdateFeed, got %v", err)
 	}
@@ -346,7 +346,7 @@ func TestUpdateFeed_NilBoth(t *testing.T) {
 		t.Fatalf("expected no error creating feed, got %v", err)
 	}
 
-	err = repo.UpdateFeed(feed.ID, nil, nil)
+	err = repo.UpdateFeed(feed.ID, nil, nil, nil)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

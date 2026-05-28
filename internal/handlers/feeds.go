@@ -113,7 +113,7 @@ func (h *FeedHandler) Patch(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	if err := h.feedService.UpdateFeed(req.ID, req.URL, req.Name); err != nil {
+	if err := h.feedService.UpdateFeed(req.ID, req.URL, req.Name, req.CollectionID); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		println(err.Error())
 		return
