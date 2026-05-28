@@ -50,7 +50,6 @@ func (r *ItemRepo) CreateItems(feed_id int, items []models.Item) error {
 	}
 
 	r.logger.Info("Items created", "count", count)
-	_, err = r.writeDB.Exec("COMMIT")
 	return err
 
 }

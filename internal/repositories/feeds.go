@@ -22,25 +22,17 @@ func NewFeedRepo(readDB *sql.DB, writeDB *sql.DB, logger *slog.Logger) *FeedRepo
 }
 
 func (r *FeedRepo) CreateFeed(url, name string) (models.Feed, error) {
-	_, err := r.writeDB.Exec("BEGIN IMMEDIATE")
-	if err != nil {
-		return models.Feed{}, err
-	}
-	_, err = r.writeDB.Exec(
+	_, err := r.writeDB.Exec(
 		"INSERT OR IGNORE INTO feeds (url, name) VALUES (?, ?)",
 		url, name,
 	)
 	if err != nil {
 		return models.Feed{}, err
 	}
-	var feed models.Feed
+	var feed = models.Feed{}
 	err = r.writeDB.QueryRow("SELECT * FROM feeds WHERE url = ?", url).
 		Scan(&feed.ID, &feed.URL, &feed.Name, &feed.CollectionID)
-	if err != nil {
-		r.writeDB.Exec("ROLLBACK")
-		return models.Feed{}, err
-	}
-	_, err = r.writeDB.Exec("COMMIT")
+
 	return feed, err
 }
 

@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"database/sql"
+	"fmt"
 	"testing"
 	"time"
 
@@ -11,145 +12,7 @@ import (
 	"github.com/Swunci/rss-feed-backend/internal/models"
 )
 
-func createTestFeed(t *testing.T, db *sql.DB) models.Feed {
-	result, err := db.Exec("INSERT INTO feeds (url, name) VALUES (?, ?)", "https://example.com/feed", "Example")
-	if err != nil {
-		t.Fatalf("failed to create test feed: %v", err)
-	}
-	id, _ := result.LastInsertId()
-	return models.Feed{ID: int(id), URL: "https://example.com/feed", Name: "Example"}
-}
-
-func createTestItem(t *testing.T, db *sql.DB) int {
-	result, err := db.Exec(`INSERT INTO feeds (url, name) VALUES ('https://example.com/feed.xml', "Example")`)
-	if err != nil {
-		t.Fatalf("failed to insert test feed: %v", err)
-	}
-	id, _ := result.LastInsertId()
-	result, err = db.Exec(`INSERT INTO items (feed_id, title, link) VALUES (?, 'Test Item', 'https://example.com/item')`, id)
-	if err != nil {
-		t.Fatalf("failed to insert test item: %v", err)
-	}
-	return int(id)
-}
-
-func createTestCollection(t *testing.T, db *sql.DB) models.Collection {
-	result, err := db.Exec("INSERT INTO collections (name) VALUES (?)", "Test Collection")
-	if err != nil {
-		t.Fatalf("failed to create test collection: %v", err)
-	}
-	id, _ := result.LastInsertId()
-	return models.Collection{ID: int(id), Name: "Test Collection"}
-}
-
-func createTestFeedWithCollection(t *testing.T, db *sql.DB, collectionID int, url string) models.Feed {
-	result, err := db.Exec("INSERT INTO feeds (url, name, collection_id) VALUES (?, ?, ?)", url, "Example", collectionID)
-	if err != nil {
-		t.Fatalf("failed to create test feed: %v", err)
-	}
-	id, _ := result.LastInsertId()
-	return models.Feed{ID: int(id), URL: url, Name: "Example", CollectionID: &collectionID}
-}
-
-func TestCreateItems(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
-
-	items := []models.Item{
-		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
-		{FeedID: feed.ID, Title: "Item 2", Link: "https://example.com/2", PublishedAt: time.Now().UTC()},
-	}
-	err := repo.CreateItems(feed.ID, items)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-
-	var count int
-	db.QueryRow("SELECT COUNT(*) FROM items WHERE feed_id = ?", feed.ID).Scan(&count)
-	if count != 2 {
-		t.Errorf("expected 2 items in db, got %d", count)
-	}
-}
-
-func TestCreateItems_Empty(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
-
-	err := repo.CreateItems(feed.ID, []models.Item{})
-	if err != nil {
-		t.Fatalf("expected no error for empty items, got %v", err)
-	}
-}
-
-func TestCreateItems_DuplicateLink(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
-
-	items := []models.Item{
-		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
-	}
-	repo.CreateItems(feed.ID, items)
-
-	err := repo.CreateItems(feed.ID, items)
-	if err != nil {
-		t.Fatalf("expected no error for duplicate, got %v", err)
-	}
-
-	result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-	if len(result) != 1 {
-		t.Errorf("expected 1 item after duplicate insert, got %d", len(result))
-	}
-}
-
 func TestGetItem(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
-
-	items := []models.Item{
-		{
-			FeedID:      feed.ID,
-			Title:       "Test Item",
-			Link:        "https://example.com/1",
-			Description: "desc",
-			PublishedAt: time.Now().UTC(),
-		},
-	}
-	err := repo.CreateItems(feed.ID, items)
-	if err != nil {
-		t.Fatalf("failed to create items: %v", err)
-	}
-
-	var id int
-	db.QueryRow("SELECT id FROM items WHERE link = ? and feed_id = ?", "https://example.com/1", feed.ID).Scan(&id)
-
-	item, err := repo.GetItem(id)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-	if item.Title != "Test Item" {
-		t.Errorf("expected title %s, got %s", "Test Item", item.Title)
-	}
-	if item.Link != "https://example.com/1" {
-		t.Errorf("expected link %s, got %s", "https://example.com/1", item.Link)
-	}
-}
-
-func TestGetItem_AllFields(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
@@ -500,15 +363,15 @@ func TestGetItemsByCollection(t *testing.T) {
 	feed2 := createTestFeedWithCollection(t, db, collection.ID, "https://example.com/feed2")
 	repo := NewItemRepo(db, db, nil)
 
-	items := []models.Item{
+	err := repo.CreateItems(feed1.ID, []models.Item{
 		{FeedID: feed1.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
-		{FeedID: feed2.ID, Title: "Item 2", Link: "https://example.com/2", PublishedAt: time.Now().UTC()},
-	}
-	err := repo.CreateItems(feed1.ID, []models.Item{items[0]})
+	})
 	if err != nil {
 		t.Fatalf("failed to create items: %v", err)
 	}
-	err = repo.CreateItems(feed2.ID, []models.Item{items[1]})
+	err = repo.CreateItems(feed2.ID, []models.Item{
+		{FeedID: feed2.ID, Title: "Item 2", Link: "https://example.com/2", PublishedAt: time.Now().UTC()},
+	})
 	if err != nil {
 		t.Fatalf("failed to create items: %v", err)
 	}
@@ -529,10 +392,9 @@ func TestGetUnreadItemsFeedIds_ReturnsFeedIds(t *testing.T) {
 	feed := createTestFeed(t, db)
 	repo := NewItemRepo(db, db, nil)
 
-	items := []models.Item{
+	err := repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Unread Item", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
-	}
-	err := repo.CreateItems(feed.ID, items)
+	})
 	if err != nil {
 		t.Fatalf("failed to create items: %v", err)
 	}
@@ -556,10 +418,9 @@ func TestGetUnreadItemsFeedIds_Empty(t *testing.T) {
 	feed := createTestFeed(t, db)
 	repo := NewItemRepo(db, db, nil)
 
-	items := []models.Item{
+	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Read Item", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
-	}
-	repo.CreateItems(feed.ID, items)
+	})
 
 	var id int
 	db.QueryRow("SELECT id FROM items WHERE link = ?", "https://example.com/1").Scan(&id)
@@ -581,12 +442,10 @@ func TestGetUnreadItemsFeedIds_Distinct(t *testing.T) {
 	feed := createTestFeed(t, db)
 	repo := NewItemRepo(db, db, nil)
 
-	// Two unread items from the same feed
-	items := []models.Item{
+	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
 		{FeedID: feed.ID, Title: "Item 2", Link: "https://example.com/2", PublishedAt: time.Now().UTC()},
-	}
-	repo.CreateItems(feed.ID, items)
+	})
 
 	feedIDs, err := repo.GetUnreadItemsFeedIds()
 	if err != nil {
@@ -604,10 +463,9 @@ func TestGetFavoriteItemsFeedIds_ReturnsFeedIds(t *testing.T) {
 	feed := createTestFeed(t, db)
 	repo := NewItemRepo(db, db, nil)
 
-	items := []models.Item{
+	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
-	}
-	repo.CreateItems(feed.ID, items)
+	})
 
 	var id int
 	db.QueryRow("SELECT id FROM items WHERE link = ?", "https://example.com/1").Scan(&id)
@@ -632,10 +490,9 @@ func TestGetFavoriteItemsFeedIds_Empty(t *testing.T) {
 	feed := createTestFeed(t, db)
 	repo := NewItemRepo(db, db, nil)
 
-	items := []models.Item{
+	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
-	}
-	repo.CreateItems(feed.ID, items)
+	})
 
 	feedIDs, err := repo.GetFavoriteItemsFeedIds()
 	if err != nil {
@@ -653,11 +510,10 @@ func TestGetFavoriteItemsFeedIds_Distinct(t *testing.T) {
 	feed := createTestFeed(t, db)
 	repo := NewItemRepo(db, db, nil)
 
-	items := []models.Item{
+	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
 		{FeedID: feed.ID, Title: "Item 2", Link: "https://example.com/2", PublishedAt: time.Now().UTC()},
-	}
-	repo.CreateItems(feed.ID, items)
+	})
 
 	var id1, id2 int
 	db.QueryRow("SELECT id FROM items WHERE link = ?", "https://example.com/1").Scan(&id1)
@@ -674,201 +530,103 @@ func TestGetFavoriteItemsFeedIds_Distinct(t *testing.T) {
 	}
 }
 
-func TestUpdateRead(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	repo := NewItemRepo(db, db, nil)
-	itemID := createTestItem(t, db)
-
-	t.Run("mark as read", func(t *testing.T) {
-		err := repo.UpdateRead(itemID, true)
-		if err != nil {
-			t.Fatalf("expected no error, got: %v", err)
-		}
-
-		var isRead bool
-		db.QueryRow("SELECT is_read FROM items WHERE id = ?", itemID).Scan(&isRead)
-		if !isRead {
-			t.Error("expected is_read to be true")
-		}
-	})
-
-	t.Run("mark as unread", func(t *testing.T) {
-		err := repo.UpdateRead(itemID, false)
-		if err != nil {
-			t.Fatalf("expected no error, got: %v", err)
-		}
-
-		var isRead bool
-		db.QueryRow("SELECT is_read FROM items WHERE id = ?", itemID).Scan(&isRead)
-		if isRead {
-			t.Error("expected is_read to be false")
-		}
-	})
-
-	t.Run("non existent item", func(t *testing.T) {
-		err := repo.UpdateRead(99999, true)
-		if err != nil {
-			t.Fatalf("expected no error for non existent item, got: %v", err)
-		}
-	})
-}
-
-func TestUpdateFavorite(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	repo := NewItemRepo(db, db, nil)
-	itemID := createTestItem(t, db)
-
-	t.Run("mark as favorite", func(t *testing.T) {
-		err := repo.UpdateFavorite(itemID, true)
-		if err != nil {
-			t.Fatalf("expected no error, got: %v", err)
-		}
-
-		var isFavorite bool
-		db.QueryRow("SELECT is_favorite FROM items WHERE id = ?", itemID).Scan(&isFavorite)
-		if !isFavorite {
-			t.Error("expected is_favorite to be true")
-		}
-	})
-
-	t.Run("mark as unfavorite", func(t *testing.T) {
-		err := repo.UpdateFavorite(itemID, false)
-		if err != nil {
-			t.Fatalf("expected no error, got: %v", err)
-		}
-
-		var isFavorite bool
-		db.QueryRow("SELECT is_favorite FROM items WHERE id = ?", itemID).Scan(&isFavorite)
-		if isFavorite {
-			t.Error("expected is_favorite to be false")
-		}
-	})
-
-	t.Run("non existent item", func(t *testing.T) {
-		err := repo.UpdateFavorite(99999, true)
-		if err != nil {
-			t.Fatalf("expected no error for non existent item, got: %v", err)
-		}
-	})
-}
-
-func TestUpdateReadMultiple_MarkAsRead(t *testing.T) {
+func TestGetItemsByFeed_LimitEnforced(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
 	repo := NewItemRepo(db, db, nil)
 
-	items := []models.Item{
-		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
-		{FeedID: feed.ID, Title: "Item 2", Link: "https://example.com/2", PublishedAt: time.Now().UTC()},
+	items := make([]models.Item, 55)
+	for i := range items {
+		items[i] = models.Item{
+			FeedID:      feed.ID,
+			Title:       fmt.Sprintf("Item %d", i),
+			Link:        fmt.Sprintf("https://example.com/%d", i),
+			PublishedAt: time.Now().UTC().Add(time.Duration(i) * time.Minute),
+		}
 	}
 	repo.CreateItems(feed.ID, items)
-
-	var id1, id2 int
-	db.QueryRow("SELECT id FROM items WHERE link = ?", "https://example.com/1").Scan(&id1)
-	db.QueryRow("SELECT id FROM items WHERE link = ?", "https://example.com/2").Scan(&id2)
-
-	err := repo.UpdateReadMultiple([]int{id1, id2}, true)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-
-	var isRead1, isRead2 bool
-	db.QueryRow("SELECT is_read FROM items WHERE id = ?", id1).Scan(&isRead1)
-	db.QueryRow("SELECT is_read FROM items WHERE id = ?", id2).Scan(&isRead2)
-	if !isRead1 || !isRead2 {
-		t.Error("expected both items to be marked as read")
-	}
-}
-
-func TestUpdateReadMultiple_MarkAsUnread(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
-
-	items := []models.Item{
-		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
-		{FeedID: feed.ID, Title: "Item 2", Link: "https://example.com/2", PublishedAt: time.Now().UTC()},
-	}
-	repo.CreateItems(feed.ID, items)
-
-	var id1, id2 int
-	db.QueryRow("SELECT id FROM items WHERE link = ?", "https://example.com/1").Scan(&id1)
-	db.QueryRow("SELECT id FROM items WHERE link = ?", "https://example.com/2").Scan(&id2)
-
-	repo.UpdateReadMultiple([]int{id1, id2}, true)
-
-	err := repo.UpdateReadMultiple([]int{id1, id2}, false)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-
-	var isRead1, isRead2 bool
-	db.QueryRow("SELECT is_read FROM items WHERE id = ?", id1).Scan(&isRead1)
-	db.QueryRow("SELECT is_read FROM items WHERE id = ?", id2).Scan(&isRead2)
-	if isRead1 || isRead2 {
-		t.Error("expected both items to be marked as unread")
-	}
-}
-
-func TestUpdateReadMultiple_NonExistentIDs(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	repo := NewItemRepo(db, db, nil)
-
-	err := repo.UpdateReadMultiple([]int{99999, 88888}, true)
-	if err != nil {
-		t.Fatalf("expected no error for non-existent ids, got %v", err)
-	}
-}
-
-func TestDeleteItem(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
-
-	items := []models.Item{
-		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
-	}
-	err := repo.CreateItems(feed.ID, items)
-	if err != nil {
-		t.Fatalf("failed to create items: %v", err)
-	}
-
-	var id int
-	db.QueryRow("SELECT id FROM items WHERE link = ?", "https://example.com/1").Scan(&id)
-
-	err = repo.DeleteItem(id)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
 
 	result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
-	if len(result) != 0 {
-		t.Errorf("expected 0 items after delete, got %d", len(result))
+	if len(result) != 50 {
+		t.Errorf("expected 50 items (limit), got %d", len(result))
 	}
 }
 
-func TestDeleteItem_NonExistent(t *testing.T) {
+func TestGetItemsByCollection_Empty(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
+
+	collection := createTestCollection(t, db)
 	repo := NewItemRepo(db, db, nil)
 
-	err := repo.DeleteItem(999)
+	result, err := repo.GetItemsByCollection(collection.ID, models.ItemFilter{}, "")
 	if err != nil {
-		t.Fatalf("expected no error for non-existent id, got %v", err)
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if len(result) != 0 {
+		t.Errorf("expected 0 items, got %d", len(result))
+	}
+}
+
+func TestGetItemsByCollection_Filter(t *testing.T) {
+	db := database.SetupTestDB(t)
+	defer db.Close()
+
+	collection := createTestCollection(t, db)
+	feed := createTestFeedWithCollection(t, db, collection.ID, "https://example.com/feed")
+	repo := NewItemRepo(db, db, nil)
+
+	repo.CreateItems(feed.ID, []models.Item{
+		{FeedID: feed.ID, Title: "Read Item", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
+		{FeedID: feed.ID, Title: "Unread Item", Link: "https://example.com/2", PublishedAt: time.Now().UTC()},
+	})
+
+	var id int
+	db.QueryRow("SELECT id FROM items WHERE link = ?", "https://example.com/1").Scan(&id)
+	repo.UpdateRead(id, true)
+
+	isRead := true
+	result, err := repo.GetItemsByCollection(collection.ID, models.ItemFilter{IsRead: &isRead}, "")
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if len(result) != 1 {
+		t.Errorf("expected 1 read item, got %d", len(result))
+	}
+	if result[0].Title != "Read Item" {
+		t.Errorf("expected 'Read Item', got %s", result[0].Title)
+	}
+}
+
+func TestGetItemsByCollection_Cursor(t *testing.T) {
+	db := database.SetupTestDB(t)
+	defer db.Close()
+
+	collection := createTestCollection(t, db)
+	feed := createTestFeedWithCollection(t, db, collection.ID, "https://example.com/feed")
+	repo := NewItemRepo(db, db, nil)
+
+	now := time.Now().UTC()
+	repo.CreateItems(feed.ID, []models.Item{
+		{FeedID: feed.ID, Title: "Oldest", Link: "https://example.com/1", PublishedAt: now.Add(-3 * time.Hour)},
+		{FeedID: feed.ID, Title: "Middle", Link: "https://example.com/2", PublishedAt: now.Add(-2 * time.Hour)},
+		{FeedID: feed.ID, Title: "Newest", Link: "https://example.com/3", PublishedAt: now.Add(-1 * time.Hour)},
+	})
+
+	cursor := now.Add(-1 * time.Hour).Format(time.RFC3339)
+	result, err := repo.GetItemsByCollection(collection.ID, models.ItemFilter{}, cursor)
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if len(result) != 2 {
+		t.Errorf("expected 2 items before cursor, got %d", len(result))
+	}
+	if result[0].Title != "Middle" {
+		t.Errorf("expected first item to be 'Middle', got %s", result[0].Title)
 	}
 }

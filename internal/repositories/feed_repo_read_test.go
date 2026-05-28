@@ -10,44 +10,6 @@ import (
 	"github.com/Swunci/rss-feed-backend/internal/models"
 )
 
-func TestCreateFeed(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	repo := NewFeedRepo(db, db, nil)
-
-	feed, err := repo.CreateFeed("https://example.com/feed", "Example")
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-
-	if feed.URL != "https://example.com/feed" {
-		t.Errorf("expected url %s, got %s", "https://example.com/feed", feed.URL)
-	}
-	if feed.Name != "Example" {
-		t.Errorf("expected name %s, got %s", "Example", feed.Name)
-	}
-}
-
-func TestCreateFeed_DuplicateURL(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	repo := NewFeedRepo(db, db, nil)
-
-	original, err := repo.CreateFeed("https://example.com/feed", "Example")
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-
-	duplicate, err := repo.CreateFeed("https://example.com/feed", "Duplicate")
-	if err != nil {
-		t.Fatalf("expected no error for duplicate url, got %v", err)
-	}
-	if duplicate.ID != original.ID {
-		t.Errorf("expected same feed to be returned, got different IDs %d vs %d", original.ID, duplicate.ID)
-	}
-}
 func TestGetFeed(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
@@ -106,6 +68,7 @@ func TestGetAllFeeds(t *testing.T) {
 func TestGetAllFeeds_Empty(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
+
 	repo := NewFeedRepo(db, db, nil)
 
 	feeds, err := repo.GetAllFeeds()
@@ -170,6 +133,44 @@ func TestGetAllFeedsWithCount_NoItems(t *testing.T) {
 	}
 	if feeds[0].Count != 0 {
 		t.Errorf("expected count 0, got %d", feeds[0].Count)
+	}
+}
+
+func TestGetAllFeedsWithCount_MultipleFeeds(t *testing.T) {
+	db := database.SetupTestDB(t)
+	defer db.Close()
+
+	feedRepo := NewFeedRepo(db, db, nil)
+	itemRepo := NewItemRepo(db, db, nil)
+
+	feed1, _ := feedRepo.CreateFeed("https://example.com/feed", "Example")
+	feed2, _ := feedRepo.CreateFeed("https://other.com/feed", "Other")
+
+	itemRepo.CreateItems(feed1.ID, []models.Item{
+		{FeedID: feed1.ID, Title: "Item 1", Link: "https://example.com/item1", Description: "desc", PublishedAt: time.Now()},
+		{FeedID: feed1.ID, Title: "Item 2", Link: "https://example.com/item2", Description: "desc", PublishedAt: time.Now()},
+	})
+	itemRepo.CreateItems(feed2.ID, []models.Item{
+		{FeedID: feed2.ID, Title: "Item 3", Link: "https://other.com/item3", Description: "desc", PublishedAt: time.Now()},
+	})
+
+	feeds, err := feedRepo.GetAllFeedsWithCount()
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if len(feeds) != 2 {
+		t.Fatalf("expected 2 feeds, got %d", len(feeds))
+	}
+
+	counts := map[int]int{}
+	for _, f := range feeds {
+		counts[f.ID] = f.Count
+	}
+	if counts[feed1.ID] != 2 {
+		t.Errorf("expected count 2 for feed1, got %d", counts[feed1.ID])
+	}
+	if counts[feed2.ID] != 1 {
+		t.Errorf("expected count 1 for feed2, got %d", counts[feed2.ID])
 	}
 }
 
@@ -259,188 +260,27 @@ func TestGetFeeds_Empty(t *testing.T) {
 	}
 }
 
-func TestUpdateFeed(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-	repo := NewFeedRepo(db, db, nil)
-
-	newURL := "https://new.com/feed"
-	newName := "New Name"
-
-	original_feed, err := repo.CreateFeed("https://example.com/feed", "Example")
-	if err != nil {
-		t.Fatalf("expected no error creating feed, got %v", err)
-	}
-
-	err = repo.UpdateFeed(original_feed.ID, &newURL, &newName, nil)
-	if err != nil {
-		t.Fatalf("expected no error updating feed, got %v", err)
-	}
-
-	return_feed, err := repo.GetFeed(original_feed.ID)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-	if return_feed.URL != newURL {
-		t.Fatalf("URL was not updated correctly, got %v", err)
-	}
-	if return_feed.Name != newName {
-		t.Fatalf("Name was not updated correctly, got %v", err)
-	}
-
-}
-
-func TestUpdateFeed_NotFound(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	repo := NewFeedRepo(db, db, nil)
-
-	newName := "New Name"
-	err := repo.UpdateFeed(999, nil, &newName, nil)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-}
-
-func TestUpdateFeed_PartialUpdate(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-	repo := NewFeedRepo(db, db, nil)
-
-	oldUrl := "https://example.com/feed"
-	oldName := "Example"
-	newName := "New Name"
-
-	feed, err := repo.CreateFeed(oldUrl, oldName)
-
-	if err != nil {
-		t.Fatalf("expected no error with createFeed, got %v", err)
-	}
-
-	err = repo.UpdateFeed(feed.ID, nil, &newName, nil)
-	if err != nil {
-		t.Fatalf("expected no error with UpdateFeed, got %v", err)
-	}
-
-	updated_feed, err := repo.GetFeed(feed.ID)
-	if err != nil {
-		t.Fatalf("expected no error with GetFeed, got %v", err)
-	}
-	if updated_feed.URL != oldUrl {
-		t.Fatalf("expected url to not change, updatedURL: %v, oldURL: %v", updated_feed.URL, oldUrl)
-	}
-	if updated_feed.Name == oldName {
-		t.Fatalf("expected update to name, updatedName: %v, NewName: %v", updated_feed.Name, newName)
-	}
-}
-
-func TestUpdateFeed_NilBoth(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	repo := NewFeedRepo(db, db, nil)
-
-	feed, err := repo.CreateFeed("https://example.com/feed", "Example")
-	if err != nil {
-		t.Fatalf("expected no error creating feed, got %v", err)
-	}
-
-	err = repo.UpdateFeed(feed.ID, nil, nil, nil)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-
-	unchanged, err := repo.GetFeed(feed.ID)
-	if err != nil {
-		t.Fatalf("expected no error, got %v", err)
-	}
-	if unchanged.URL != feed.URL {
-		t.Errorf("expected URL to remain %s, got %s", feed.URL, unchanged.URL)
-	}
-	if unchanged.Name != feed.Name {
-		t.Errorf("expected Name to remain %s, got %s", feed.Name, unchanged.Name)
-	}
-}
-
-func TestDeleteFeed(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	repo := NewFeedRepo(db, db, nil)
-
-	feed, err := repo.CreateFeed("https://example.com/feed", "Example")
-	if err != nil {
-		t.Fatalf("expected no error creating feed, got %v", err)
-	}
-
-	err = repo.DeleteFeed(feed.ID)
-	if err != nil {
-		t.Fatalf("expected no error deleting feed, got %v", err)
-	}
-
-	_, err = repo.GetFeed(feed.ID)
-	if err == nil {
-		t.Fatal("expected error for deleted feed, got nil")
-	}
-}
-
-func TestDeleteFeed_NotFound(t *testing.T) {
-	db := database.SetupTestDB(t)
-	defer db.Close()
-
-	repo := NewFeedRepo(db, db, nil)
-
-	err := repo.DeleteFeed(999)
-	if err != nil {
-		t.Fatalf("expected no error deleting non-existent feed, got %v", err)
-	}
-}
-
-func TestDeleteFeed_CascadesItems(t *testing.T) {
+func TestGetFeeds_UnreadFilter(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
 	feedRepo := NewFeedRepo(db, db, nil)
 	itemRepo := NewItemRepo(db, db, nil)
 
-	feed, err := feedRepo.CreateFeed("https://example.com/feed", "Example")
-	if err != nil {
-		t.Fatalf("expected no error creating feed, got %v", err)
-	}
+	feed, _ := feedRepo.CreateFeed("https://example.com/feed", "Example")
+	itemRepo.CreateItems(feed.ID, []models.Item{
+		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/item1", Description: "desc", PublishedAt: time.Now()},
+		{FeedID: feed.ID, Title: "Item 2", Link: "https://example.com/item2", Description: "desc", PublishedAt: time.Now()},
+	})
 
-	items := []models.Item{
-		{
-			FeedID:      feed.ID,
-			Title:       "Item 1",
-			Link:        "https://example.com/item1",
-			Description: "Description 1",
-			PublishedAt: time.Now(),
-		},
-		{
-			FeedID:      feed.ID,
-			Title:       "Item 2",
-			Link:        "https://example.com/item2",
-			Description: "Description 2",
-			PublishedAt: time.Now(),
-		},
-	}
+	items, _ := itemRepo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
+	itemRepo.UpdateRead(items[0].ID, true)
 
-	err = itemRepo.CreateItems(feed.ID, items)
+	feeds, err := feedRepo.GetFeeds([]int{feed.ID}, models.FeedFilterUnread)
 	if err != nil {
-		t.Fatalf("expected no error creating items, got %v", err)
+		t.Fatalf("expected no error, got %v", err)
 	}
-
-	err = feedRepo.DeleteFeed(feed.ID)
-	if err != nil {
-		t.Fatalf("expected no error deleting feed, got %v", err)
-	}
-
-	remainingItems, err := itemRepo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
-	if err != nil {
-		t.Fatalf("expected no error fetching items, got %v", err)
-	}
-	if len(remainingItems) != 0 {
-		t.Errorf("expected 0 items after feed deletion, got %d", len(remainingItems))
+	if feeds[0].Count != 1 {
+		t.Errorf("expected count 1 after marking one read, got %d", feeds[0].Count)
 	}
 }
