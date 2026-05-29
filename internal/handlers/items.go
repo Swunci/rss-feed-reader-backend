@@ -36,6 +36,20 @@ func (h *ItemHandler) Get(w http.ResponseWriter, r *http.Request) {
 	WriteJSON(w, http.StatusOK, item)
 }
 
+func (h *ItemHandler) GetAllItems(w http.ResponseWriter, r *http.Request) {
+	timestamp_cursor := r.URL.Query().Get("cursor")
+	filter := parseItemFilter(r)
+	h.logger.Info("Item filters", "read", filter.IsRead, "favorite", filter.IsFavorite)
+
+	item, err := h.itemService.GetAllItems(filter, timestamp_cursor)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		println(err.Error())
+		return
+	}
+	WriteJSON(w, http.StatusOK, item)
+}
+
 func (h *ItemHandler) GetItemsByFeed(w http.ResponseWriter, r *http.Request) {
 	feed_id, err := ParseID(chi.URLParam(r, "feed_id"))
 	timestamp_cursor := r.URL.Query().Get("cursor")

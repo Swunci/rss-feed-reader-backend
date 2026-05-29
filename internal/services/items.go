@@ -24,6 +24,10 @@ func (s *ItemService) GetItem(item_id int) (models.Item, error) {
 	return s.repository.GetItem(item_id)
 }
 
+func (s *ItemService) GetAllItems(filter models.ItemFilter, timestamp_cursor string) ([]models.Item, error) {
+	return s.repository.GetAllItems(filter, timestamp_cursor)
+}
+
 func (s *ItemService) GetItemsByFeed(feed_id int, filter models.ItemFilter, timestamp_cursor string) ([]models.Item, error) {
 	return s.repository.GetItemsByFeed(feed_id, filter, timestamp_cursor)
 }

@@ -76,25 +76,49 @@ func (r *ItemRepo) GetItem(item_id int) (models.Item, error) {
 	return item, nil
 }
 
+func (r *ItemRepo) GetAllItems(filter models.ItemFilter, timestamp_cursor string) ([]models.Item, error) {
+	query := `SELECT * FROM items WHERE 1=1`
+	args := []any{}
+	query, args, err := ApplyItemFilters(query, args, filter, timestamp_cursor)
+	if err != nil {
+		return nil, err
+	}
+	query += ` ORDER BY published_at DESC`
+
+	query += ` LIMIT 50`
+	rows, err := r.readDB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	var items = []models.Item{}
+
+	for rows.Next() {
+		var item models.Item
+		err := rows.Scan(
+			&item.ID,
+			&item.FeedID,
+			&item.Title,
+			&item.Link,
+			&item.Description,
+			&item.PublishedAt,
+			&item.IsRead,
+			&item.IsFavorite,
+		)
+		if err != nil {
+			return nil, err
+		}
+		items = append(items, item)
+	}
+	return items, nil
+}
+
 func (r *ItemRepo) GetItemsByFeed(feed_id int, filter models.ItemFilter, timestamp_cursor string) ([]models.Item, error) {
 	query := `SELECT * FROM items WHERE feed_id = ?`
 	args := []any{feed_id}
-	if filter.IsRead != nil {
-		query += ` AND is_read = ?`
-		args = append(args, *filter.IsRead)
-	}
-	if filter.IsFavorite != nil {
-		query += ` AND is_favorite = ?`
-		args = append(args, *filter.IsFavorite)
-	}
-
-	if timestamp_cursor != "" {
-		timestamp, err := time.Parse(time.RFC3339, timestamp_cursor)
-		if err != nil {
-			r.logger.Error("Parse timestamp")
-		}
-		query += ` AND published_at < ?`
-		args = append(args, timestamp.UTC().Format(time.RFC3339))
+	query, args, err := ApplyItemFilters(query, args, filter, timestamp_cursor)
+	if err != nil {
+		return nil, err
 	}
 
 	query += ` ORDER BY published_at DESC`
@@ -132,22 +156,9 @@ func (r *ItemRepo) GetItemsByCollection(collection_id int, filter models.ItemFil
 			  JOIN feeds ON items.feed_id = feeds.id 
 			  WHERE feeds.collection_id = ?`
 	args := []any{collection_id}
-	if filter.IsRead != nil {
-		query += ` AND is_read = ?`
-		args = append(args, *filter.IsRead)
-	}
-	if filter.IsFavorite != nil {
-		query += ` AND is_favorite = ?`
-		args = append(args, *filter.IsFavorite)
-	}
-
-	if timestamp_cursor != "" {
-		timestamp, err := time.Parse(time.RFC3339, timestamp_cursor)
-		if err != nil {
-			r.logger.Error("Parse timestamp")
-		}
-		query += ` AND published_at < ?`
-		args = append(args, timestamp.UTC().Format(time.RFC3339))
+	query, args, err := ApplyItemFilters(query, args, filter, timestamp_cursor)
+	if err != nil {
+		return nil, err
 	}
 
 	query += ` ORDER BY published_at DESC`

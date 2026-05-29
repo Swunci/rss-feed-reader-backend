@@ -7,6 +7,7 @@ import (
 func ItemRoutes(h *Handlers) chi.Router {
 	r := chi.NewRouter()
 
+	r.Get("/", h.Item.GetAllItems)
 	r.Get("/{item_id}", h.Item.Get)
 	r.Get("/events", h.ItemSEE.ItemEvents)
 	r.Post("/", h.Item.Post)
