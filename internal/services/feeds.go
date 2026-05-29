@@ -77,6 +77,10 @@ func (s *FeedService) UpdateFeed(feed_id int, url, name *string, collection_id *
 	return s.feedRepo.UpdateFeed(feed_id, url, name, collection_id)
 }
 
+func (s *FeedService) RemoveFeedFromCollection(feed_id int) error {
+	return s.feedRepo.RemoveFeedFromCollection(feed_id)
+}
+
 func (s *FeedService) DeleteFeed(feed_id int) error {
 	return s.feedRepo.DeleteFeed(feed_id)
 }

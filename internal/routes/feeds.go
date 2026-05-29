@@ -15,6 +15,7 @@ func FeedRoutes(h *Handlers) chi.Router {
 	r.Post("/{feed_id}/refresh", h.Feed.RefreshFeed)
 	r.Patch("/{feed_id}", h.Feed.Patch)
 	r.Delete("/{feed_id}", h.Feed.Delete)
+	r.Delete("/{feed_id}/unassign", h.Feed.UnassignCollection)
 
 	return r
 }

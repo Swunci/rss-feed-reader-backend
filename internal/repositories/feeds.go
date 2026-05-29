@@ -141,6 +141,13 @@ func (r *FeedRepo) UpdateFeed(feed_id int, url, name *string, collection_id *int
 	return err
 }
 
+func (r *FeedRepo) RemoveFeedFromCollection(feed_id int) error {
+	_, err := r.writeDB.Exec(`
+        UPDATE feeds SET collection_id = NULL WHERE id = ?
+    `, feed_id)
+	return err
+}
+
 func (r *FeedRepo) DeleteFeed(feed_id int) error {
 	_, err := r.writeDB.Exec(
 		"DELETE FROM feeds WHERE id = ?",

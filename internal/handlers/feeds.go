@@ -96,7 +96,7 @@ func (h *FeedHandler) RefreshFeeds(w http.ResponseWriter, r *http.Request) {
 func (h *FeedHandler) RefreshFeed(w http.ResponseWriter, r *http.Request) {
 	feed_id, err := ParseID(chi.URLParam(r, "feed_id"))
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
+		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	err = h.pollingService.RefreshFeed(feed_id)
@@ -108,12 +108,31 @@ func (h *FeedHandler) RefreshFeed(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *FeedHandler) Patch(w http.ResponseWriter, r *http.Request) {
+	feed_id, err := ParseID(chi.URLParam(r, "feed_id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 	var req models.FeedUpdateRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	if err := h.feedService.UpdateFeed(req.ID, req.URL, req.Name, req.CollectionID); err != nil {
+	if err := h.feedService.UpdateFeed(feed_id, req.URL, req.Name, req.CollectionID); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		println(err.Error())
+		return
+	}
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *FeedHandler) UnassignCollection(w http.ResponseWriter, r *http.Request) {
+	feed_id, err := ParseID(chi.URLParam(r, "feed_id"))
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+	if err := h.feedService.RemoveFeedFromCollection(feed_id); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		println(err.Error())
 		return

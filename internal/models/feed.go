@@ -12,7 +12,6 @@ type FeedPostRequest struct {
 }
 
 type FeedUpdateRequest struct {
-	ID           int     `json:"id"`
 	URL          *string `json:"url"`
 	Name         *string `json:"name"`
 	CollectionID *int    `json:"collection_id"`
