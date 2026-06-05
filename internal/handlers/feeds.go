@@ -23,12 +23,13 @@ type PollingService interface {
 }
 
 type FeedHandler struct {
-	feedService    *services.FeedService
-	pollingService *services.PollingService
+	feedService     *services.FeedService
+	pollingService  *services.PollingService
+	discoverService *services.DiscoverService
 }
 
-func NewFeedHandler(fs *services.FeedService, ps *services.PollingService) *FeedHandler {
-	return &FeedHandler{feedService: fs, pollingService: ps}
+func NewFeedHandler(fs *services.FeedService, ps *services.PollingService, ds *services.DiscoverService) *FeedHandler {
+	return &FeedHandler{feedService: fs, pollingService: ps, discoverService: ds}
 }
 
 func (h *FeedHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
@@ -154,4 +155,18 @@ func (h *FeedHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	}
 	h.pollingService.StopFeed(feed_id)
 	w.WriteHeader(http.StatusOK)
+}
+
+func (h *FeedHandler) Discover(w http.ResponseWriter, r *http.Request) {
+	var req models.FeedPostRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid json", http.StatusBadRequest)
+		return
+	}
+	feed_res, err := h.discoverService.DiscoverFeeds(req.URL)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	WriteJSON(w, http.StatusOK, feed_res)
 }

@@ -99,6 +99,10 @@ func (s *PollingService) fetchItems(feed models.Feed) {
 		}
 		if description == "" {
 			description = getYouTubeDescription(entry)
+			thumbnail := getYouTubeThumbnail(entry)
+			if thumbnail != "" {
+				description = fmt.Sprintf(`<img src="%s"><br>%s`, thumbnail, description)
+			}
 		}
 		if title == "" {
 			title = "Untitled"
@@ -157,6 +161,21 @@ func getYouTubeDescription(entry *gofeed.Item) string {
 				if desc, ok := group[0].Children["description"]; ok {
 					if len(desc) > 0 {
 						return desc[0].Value
+					}
+				}
+			}
+		}
+	}
+	return ""
+}
+
+func getYouTubeThumbnail(entry *gofeed.Item) string {
+	if media, ok := entry.Extensions["media"]; ok {
+		if group, ok := media["group"]; ok {
+			if len(group) > 0 {
+				if thumbnail, ok := group[0].Children["thumbnail"]; ok {
+					if len(thumbnail) > 0 {
+						return thumbnail[0].Attrs["url"]
 					}
 				}
 			}

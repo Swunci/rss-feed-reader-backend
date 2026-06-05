@@ -63,13 +63,14 @@ func NewApp() *App {
 
 	feedService := services.NewFeedService(feedRepo, itemRepo, logger)
 	itemService := services.NewItemService(itemRepo)
+	discoverService := services.NewDiscoverService(feedRepo, itemRepo, feedService, logger)
 	collectionService := services.NewCollectionService(collectionRepo)
 	pollingService := services.NewPollingService(feedRepo, itemRepo, logger, itemSEEChannel)
 
 	handlers := routes.Handlers{
 		Item:       handlers.NewItemHandler(itemService, logger),
 		ItemSEE:    handlers.NewItemSSEHandler(itemSEEChannel),
-		Feed:       handlers.NewFeedHandler(feedService, pollingService),
+		Feed:       handlers.NewFeedHandler(feedService, pollingService, discoverService),
 		Collection: handlers.NewCollectionHandler(collectionService),
 	}
 

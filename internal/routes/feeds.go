@@ -11,6 +11,7 @@ func FeedRoutes(h *Handlers) chi.Router {
 	r.Get("/{feed_id}/items", h.Item.GetItemsByFeed)
 	r.Get("/{feed_id}", h.Feed.GetFeed)
 	r.Post("/", h.Feed.Post)
+	r.Post("/discover", h.Feed.Discover)
 	r.Post("/refresh", h.Feed.RefreshFeeds)
 	r.Post("/{feed_id}/refresh", h.Feed.RefreshFeed)
 	r.Patch("/{feed_id}", h.Feed.Patch)
