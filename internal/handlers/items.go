@@ -41,13 +41,14 @@ func (h *ItemHandler) GetAllItems(w http.ResponseWriter, r *http.Request) {
 	filter := parseItemFilter(r)
 	h.logger.Info("Item filters", "read", filter.IsRead, "favorite", filter.IsFavorite)
 
-	item, err := h.itemService.GetAllItems(filter, timestamp_cursor)
+	items, err := h.itemService.GetAllItems(filter, timestamp_cursor)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		println(err.Error())
 		return
 	}
-	WriteJSON(w, http.StatusOK, item)
+	h.logger.Info("Item count", "count", len(items))
+	WriteJSON(w, http.StatusOK, items)
 }
 
 func (h *ItemHandler) GetItemsByFeed(w http.ResponseWriter, r *http.Request) {
