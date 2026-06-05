@@ -11,6 +11,7 @@ import (
 
 	"github.com/Swunci/rss-feed-backend/internal/models"
 	"github.com/Swunci/rss-feed-backend/internal/repositories"
+	"github.com/mmcdole/gofeed"
 )
 
 type DiscoverService struct {
@@ -25,7 +26,7 @@ func NewDiscoverService(fr *repositories.FeedRepo, ir *repositories.ItemRepo, is
 }
 
 func (s *DiscoverService) DiscoverFeeds(url string) ([]models.DiscoverFeed, error) {
-	if strings.HasSuffix(url, ".rss") {
+	if isValidRSSLink(url) {
 		return []models.DiscoverFeed{}, nil
 	}
 	discovered_feeds := []models.DiscoverFeed{}
@@ -38,6 +39,12 @@ func (s *DiscoverService) DiscoverFeeds(url string) ([]models.DiscoverFeed, erro
 		return discovered_feeds, err
 	}
 	return discovered_feeds, nil
+}
+
+func isValidRSSLink(url string) bool {
+	fp := gofeed.NewParser()
+	_, err := fp.ParseURL(url)
+	return err == nil
 }
 
 func isYouTubeURL(u string) bool {
@@ -103,11 +110,18 @@ func getYouTubeFeeds(channelURL string) ([]models.DiscoverFeed, error) {
 	id := youtube_channel.ID[2:]
 	base := "https://www.youtube.com/feeds/videos.xml?playlist_id="
 
-	feeds := []models.DiscoverFeed{
-		{Name: fmt.Sprintf("%s", youtube_channel.Name), URL: fmt.Sprintf("https://www.youtube.com/feeds/videos.xml?channel_id=%s", youtube_channel.ID)},
+	options := []models.DiscoverFeed{
+		{Name: youtube_channel.Name, URL: fmt.Sprintf("https://www.youtube.com/feeds/videos.xml?channel_id=%s", youtube_channel.ID)},
 		{Name: fmt.Sprintf("%s - Videos", youtube_channel.Name), URL: fmt.Sprintf("%sUULF%s", base, id)},
 		{Name: fmt.Sprintf("%s - Shorts", youtube_channel.Name), URL: fmt.Sprintf("%sUUSH%s", base, id)},
 		{Name: fmt.Sprintf("%s - Live", youtube_channel.Name), URL: fmt.Sprintf("%sUULV%s", base, id)},
+	}
+
+	var feeds []models.DiscoverFeed
+	for _, o := range options {
+		if isValidRSSLink(o.URL) {
+			feeds = append(feeds, o)
+		}
 	}
 
 	return feeds, nil
@@ -159,10 +173,13 @@ func getRedditFeeds(redditURL string) ([]models.DiscoverFeed, error) {
 
 	var feeds []models.DiscoverFeed
 	for _, s := range options {
-		feeds = append(feeds, models.DiscoverFeed{
-			Name: fmt.Sprintf("%s - %s", name, s.label),
-			URL:  fmt.Sprintf("%s%s.rss", base, s.path),
-		})
+		url := fmt.Sprintf("%s%s.rss", base, s.path)
+		if isValidRSSLink(url) {
+			feeds = append(feeds, models.DiscoverFeed{
+				Name: fmt.Sprintf("%s - %s", name, s.label),
+				URL:  url,
+			})
+		}
 	}
 
 	return feeds, nil
