@@ -8,7 +8,8 @@ type Feed struct {
 }
 
 type FeedPostRequest struct {
-	URL string `json:"url"`
+	URL  string `json:"url"`
+	Name string `json:"name,omitempty"`
 }
 
 type FeedUpdateRequest struct {
@@ -30,6 +31,6 @@ const (
 )
 
 type DiscoverFeed struct {
-	Title string `json:"title"`
-	URL   string `json:"url"`
+	Name string `json:"name"`
+	URL  string `json:"url"`
 }

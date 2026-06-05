@@ -76,7 +76,7 @@ func (h *FeedHandler) Post(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	feed, err := h.feedService.CreateFeed(req.URL)
+	feed, err := h.feedService.CreateFeed(req.URL, req.Name)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

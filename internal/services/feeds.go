@@ -63,14 +63,18 @@ func (s *FeedService) GetAllFavorite() ([]models.FeedResponse, error) {
 	return feeds, nil
 }
 
-func (s *FeedService) CreateFeed(url string) (models.Feed, error) {
+func (s *FeedService) CreateFeed(url, title string) (models.Feed, error) {
 	fp := gofeed.NewParser()
 	parsed, err := fp.ParseURL(url)
 	if err != nil {
 		s.logger.Error("Parse feed link", "feed_url", url, "err", err)
 		return models.Feed{}, err
 	}
-	return s.feedRepo.CreateFeed(url, parsed.Title)
+	feed_title := parsed.Title
+	if len(title) > 0 {
+		feed_title = title
+	}
+	return s.feedRepo.CreateFeed(url, feed_title)
 }
 
 func (s *FeedService) UpdateFeed(feed_id int, url, name *string, collection_id *int) error {

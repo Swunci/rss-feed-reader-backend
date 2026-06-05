@@ -58,44 +58,56 @@ func isRedditURL(u string) bool {
 	return host == "reddit.com" || host == "www.reddit.com"
 }
 
-func extractChannelID(channelURL string) (string, error) {
-	re := regexp.MustCompile(`(?:www\.)?youtube\.com/channel/(UC[\w-]+)`)
-	if match := re.FindStringSubmatch(channelURL); len(match) > 1 {
-		return match[1], nil
-	}
+type YouTubeChannel struct {
+	ID   string
+	Name string
+}
 
+func extractChannelInfo(channelURL string) (YouTubeChannel, error) {
+	re := regexp.MustCompile(`(?:www\.)?youtube\.com/channel/(UC[\w-]+)`)
 	resp, err := http.Get(channelURL)
 	if err != nil {
-		return "", err
+		return YouTubeChannel{}, err
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "", err
+		return YouTubeChannel{}, err
 	}
 
-	match := re.FindSubmatch(body)
-	if len(match) < 2 {
-		return "", fmt.Errorf("channel ID not found")
+	idMatch := re.FindSubmatch(body)
+	if len(idMatch) < 2 {
+		return YouTubeChannel{}, fmt.Errorf("channel ID not found")
 	}
-	return string(match[1]), nil
+
+	nameRe := regexp.MustCompile(`<meta property="og:title" content="([^"]+)"`)
+	nameMatch := nameRe.FindSubmatch(body)
+	name := ""
+	if len(nameMatch) > 1 {
+		name = string(nameMatch[1])
+	}
+
+	return YouTubeChannel{
+		ID:   string(idMatch[1]),
+		Name: name,
+	}, nil
 }
 
 func getYouTubeFeeds(channelURL string) ([]models.DiscoverFeed, error) {
-	channelID, err := extractChannelID(channelURL)
+	youtube_channel, err := extractChannelInfo(channelURL)
 	if err != nil {
 		return nil, err
 	}
 
-	id := channelID[2:]
+	id := youtube_channel.ID[2:]
 	base := "https://www.youtube.com/feeds/videos.xml?playlist_id="
 
 	feeds := []models.DiscoverFeed{
-		{Title: "All", URL: fmt.Sprintf("https://www.youtube.com/feeds/videos.xml?channel_id=%s", channelID)},
-		{Title: "Videos", URL: fmt.Sprintf("%sUULF%s", base, id)},
-		{Title: "Shorts", URL: fmt.Sprintf("%sUUSH%s", base, id)},
-		{Title: "Live", URL: fmt.Sprintf("%sUULV%s", base, id)},
+		{Name: fmt.Sprintf("%s", youtube_channel.Name), URL: fmt.Sprintf("https://www.youtube.com/feeds/videos.xml?channel_id=%s", youtube_channel.ID)},
+		{Name: fmt.Sprintf("%s - Videos", youtube_channel.Name), URL: fmt.Sprintf("%sUULF%s", base, id)},
+		{Name: fmt.Sprintf("%s - Shorts", youtube_channel.Name), URL: fmt.Sprintf("%sUUSH%s", base, id)},
+		{Name: fmt.Sprintf("%s - Live", youtube_channel.Name), URL: fmt.Sprintf("%sUULV%s", base, id)},
 	}
 
 	return feeds, nil
@@ -135,8 +147,8 @@ func getRedditFeeds(redditURL string) ([]models.DiscoverFeed, error) {
 			label string
 			path  string
 		}{
-			{"Overview", ""},
-			{"Submitted", "/submitted"},
+			{"", ""},
+			{"Posts", "/submitted"},
 			{"Comments", "/comments"},
 		}
 	default:
@@ -148,8 +160,8 @@ func getRedditFeeds(redditURL string) ([]models.DiscoverFeed, error) {
 	var feeds []models.DiscoverFeed
 	for _, s := range options {
 		feeds = append(feeds, models.DiscoverFeed{
-			Title: fmt.Sprintf("%s - %s", name, s.label),
-			URL:   fmt.Sprintf("%s%s.rss", base, s.path),
+			Name: fmt.Sprintf("%s - %s", name, s.label),
+			URL:  fmt.Sprintf("%s%s.rss", base, s.path),
 		})
 	}
 
