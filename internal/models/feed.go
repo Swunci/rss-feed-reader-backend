@@ -29,11 +29,6 @@ const (
 	FeedFilterFavorite FeedFilter = "favorite"
 )
 
-type DiscoverResponse struct {
-	Feed  *Feed
-	Feeds []DiscoverFeed
-}
-
 type DiscoverFeed struct {
 	Title string
 	URL   string

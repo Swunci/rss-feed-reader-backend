@@ -24,24 +24,20 @@ func NewDiscoverService(fr *repositories.FeedRepo, ir *repositories.ItemRepo, is
 	return &DiscoverService{feedRepo: fr, itemRepo: ir, feedService: is, logger: logger}
 }
 
-func (s *DiscoverService) DiscoverFeeds(url string) (models.DiscoverResponse, error) {
-	result := models.DiscoverResponse{}
-	feed, err := s.feedService.CreateFeed(url)
-	if err == nil {
-		result.Feed = &feed
-		return result, err
+func (s *DiscoverService) DiscoverFeeds(url string) ([]models.DiscoverFeed, error) {
+	if strings.HasSuffix(url, ".rss") {
+		return []models.DiscoverFeed{}, nil
 	}
-
+	discovered_feeds := []models.DiscoverFeed{}
 	if isYouTubeURL(url) {
-		result.Feeds, err = getYouTubeFeeds(url)
-		return result, err
+		discovered_feeds, err := getYouTubeFeeds(url)
+		return discovered_feeds, err
 	}
 	if isRedditURL(url) {
-		result.Feeds, err = getRedditFeeds(url)
-		return result, err
+		discovered_feeds, err := getRedditFeeds(url)
+		return discovered_feeds, err
 	}
-	return result, nil
-
+	return discovered_feeds, nil
 }
 
 func isYouTubeURL(u string) bool {

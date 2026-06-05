@@ -163,10 +163,10 @@ func (h *FeedHandler) Discover(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "invalid json", http.StatusBadRequest)
 		return
 	}
-	feed_res, err := h.discoverService.DiscoverFeeds(req.URL)
+	feeds_options, err := h.discoverService.DiscoverFeeds(req.URL)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	WriteJSON(w, http.StatusOK, feed_res)
+	WriteJSON(w, http.StatusOK, feeds_options)
 }
