@@ -1,7 +1,11 @@
 package routes
 
 import (
+	"time"
+
+	"github.com/Swunci/rss-feed-backend/internal/middleware"
 	"github.com/go-chi/chi/v5"
+	"golang.org/x/time/rate"
 )
 
 func FeedRoutes(h *Handlers) chi.Router {
@@ -12,7 +16,7 @@ func FeedRoutes(h *Handlers) chi.Router {
 	r.Get("/{feed_id}", h.Feed.GetFeed)
 	r.Post("/", h.Feed.Post)
 	r.Post("/discover", h.Feed.Discover)
-	r.Post("/refresh", h.Feed.RefreshFeeds)
+	r.With(middleware.RateLimit(rate.NewLimiter(rate.Every(5*time.Minute), 1))).Post("/refresh", h.Feed.RefreshFeeds)
 	r.Post("/{feed_id}/refresh", h.Feed.RefreshFeed)
 	r.Patch("/{feed_id}", h.Feed.Patch)
 	r.Delete("/{feed_id}", h.Feed.Delete)
