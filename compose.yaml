@@ -1,0 +1,14 @@
+services:
+  server:
+    build:
+      context: .
+      target: final
+    ports:
+      - 8081:8081
+    volumes:
+      - db-data:/app/data
+    env_file:
+      - ./.env
+volumes:
+  db-data:
+

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/rs/cors"
 	_ "modernc.org/sqlite"
@@ -23,12 +24,12 @@ type App struct {
 }
 
 func NewApp() *App {
-	readDB, readDB_err := sql.Open("sqlite", "app.db")
+	readDB, readDB_err := sql.Open("sqlite", "/app/data/app.db")
 	if readDB_err != nil {
 		panic(readDB_err)
 	}
 
-	writeDB, writeDB_err := sql.Open("sqlite", "app.db")
+	writeDB, writeDB_err := sql.Open("sqlite", "/app/data/app.db")
 	if writeDB_err != nil {
 		panic(writeDB_err)
 	}
@@ -49,6 +50,7 @@ func NewApp() *App {
 		handler = slog.NewTextHandler(os.Stdout, nil)
 	}
 	logger := slog.New(handler)
+	slog.SetDefault(logger)
 
 	feedRepo := repositories.NewFeedRepo(readDB, writeDB, logger)
 	itemRepo := repositories.NewItemRepo(readDB, writeDB, logger)
@@ -75,8 +77,9 @@ func NewApp() *App {
 	}
 
 	router := routes.MainRouter(&handlers)
+	origins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
 	c := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   origins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
 		AllowedHeaders:   []string{"Origin", "Content-Type", "Authorization"},
 		AllowCredentials: true,
