@@ -23,13 +23,13 @@ type App struct {
 	Router  http.Handler
 }
 
-func NewApp() *App {
-	readDB, readDB_err := sql.Open("sqlite", "/app/data/app.db")
+func NewApp(serveStatic bool) *App {
+	readDB, readDB_err := sql.Open("sqlite", getDBPath())
 	if readDB_err != nil {
 		panic(readDB_err)
 	}
 
-	writeDB, writeDB_err := sql.Open("sqlite", "/app/data/app.db")
+	writeDB, writeDB_err := sql.Open("sqlite", getDBPath())
 	if writeDB_err != nil {
 		panic(writeDB_err)
 	}
@@ -44,7 +44,7 @@ func NewApp() *App {
 	configureSQLite(writeDB)
 
 	var handler slog.Handler
-	if os.Getenv("ENV") == "production" {
+	if os.Getenv("APP_ENV") == "production" {
 		handler = slog.NewJSONHandler(os.Stdout, nil)
 	} else {
 		handler = slog.NewTextHandler(os.Stdout, nil)
@@ -76,7 +76,7 @@ func NewApp() *App {
 		Collection: handlers.NewCollectionHandler(collectionService),
 	}
 
-	router := routes.MainRouter(&handlers)
+	router := routes.MainRouter(&handlers, serveStatic)
 	origins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
 	c := cors.New(cors.Options{
 		AllowedOrigins:   origins,
@@ -107,4 +107,11 @@ func configureSQLite(db *sql.DB) error {
 		}
 	}
 	return nil
+}
+
+func getDBPath() string {
+	if path := os.Getenv("DB_PATH"); path != "" {
+		return path
+	}
+	return "./app.db"
 }

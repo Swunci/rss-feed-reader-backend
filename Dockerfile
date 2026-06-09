@@ -11,7 +11,7 @@ ARG TARGETARCH
 
 RUN --mount=type=cache,target=/go/pkg/mod/ \
     --mount=type=bind,target=. \
-    CGO_ENABLED=0 GOARCH=$TARGETARCH go build -o /bin/server ./cmd/rss-feed-backend
+    CGO_ENABLED=0 GOARCH=$TARGETARCH go build -o /bin/server ./cmd/rss-feed-backend/server
 
 FROM alpine:latest AS final
 

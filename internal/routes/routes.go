@@ -1,7 +1,10 @@
 package routes
 
 import (
+	"io/fs"
 	"net/http"
+
+	rssfeedbackend "github.com/Swunci/rss-feed-backend"
 
 	"github.com/Swunci/rss-feed-backend/internal/handlers"
 	"github.com/go-chi/chi/v5"
@@ -15,12 +18,20 @@ type Handlers struct {
 	Collection *handlers.CollectionHandler
 }
 
-func MainRouter(h *Handlers) http.Handler {
+func MainRouter(h *Handlers, serveStatic bool) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
 	r.Mount("/feeds", FeedRoutes(h))
 	r.Mount("/items", ItemRoutes(h))
 	r.Mount("/collections", CollectionRoutes(h))
+
+	if serveStatic {
+		publicFS, err := fs.Sub(rssfeedbackend.FrontendAssets, "frontend/dist")
+		if err != nil {
+			panic(err)
+		}
+		r.Handle("/*", http.FileServer(http.FS(publicFS)))
+	}
 
 	return r
 }
