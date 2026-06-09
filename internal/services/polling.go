@@ -24,19 +24,14 @@ type PollingService struct {
 	feedRepo       PollingFeedRepository
 	itemRepo       PollingItemRepository
 	cancelFuncs    map[int]context.CancelFunc
-	logger         *slog.Logger
 	itemSEEChannel chan string
 }
 
-func NewPollingService(feedRepo PollingFeedRepository, itemRepo PollingItemRepository, logger *slog.Logger, itemSEEChannel chan string) *PollingService {
-	if logger == nil {
-		logger = slog.Default()
-	}
+func NewPollingService(feedRepo PollingFeedRepository, itemRepo PollingItemRepository, itemSEEChannel chan string) *PollingService {
 	return &PollingService{
 		feedRepo:       feedRepo,
 		itemRepo:       itemRepo,
 		cancelFuncs:    make(map[int]context.CancelFunc),
-		logger:         logger,
 		itemSEEChannel: itemSEEChannel,
 	}
 }
@@ -44,7 +39,7 @@ func NewPollingService(feedRepo PollingFeedRepository, itemRepo PollingItemRepos
 func (s *PollingService) Start() {
 	feeds, err := s.feedRepo.GetAllFeeds()
 	if err != nil {
-		s.logger.Error("Failed to get feeds", "err", err)
+		slog.Error("Get feeds on start", "err", err)
 		return
 	}
 	for _, feed := range feeds {
@@ -60,9 +55,10 @@ func (s *PollingService) StartFeed(feed models.Feed) {
 
 func (s *PollingService) StopFeed(feed_id int) {
 	if cancel, ok := s.cancelFuncs[feed_id]; ok {
+		slog.Info("Stopping feed", "feed_id", feed_id)
 		cancel()
 		delete(s.cancelFuncs, feed_id)
-		s.logger.Info("Stopping feed", "feed_id", feed_id)
+
 	}
 }
 
@@ -70,7 +66,7 @@ func (s *PollingService) pollFeed(feed models.Feed, ctx context.Context) {
 	interval := time.Duration(15) * time.Minute
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
-	s.logger.Info("Polling start", "feed_url", feed.URL, "feed_id", feed.ID)
+	slog.Info("Polling start", "feed_url", feed.URL, "feed_id", feed.ID)
 	s.fetchItems(feed)
 	for {
 		select {
@@ -86,10 +82,10 @@ func (s *PollingService) fetchItems(feed models.Feed) {
 	fp := gofeed.NewParser()
 	parsed, err := fp.ParseURL(feed.URL)
 	if err != nil {
-		s.logger.Error("Parse feed", "feed_url", feed.URL, "err", err)
+		slog.Error("Parse feed", "feed_url", feed.URL, "err", err)
 		return
 	}
-	s.logger.Info("Items fetched", "feed_url", feed.URL)
+	slog.Info("Items fetched", "feed_url", feed.URL)
 	var items []models.Item
 	for _, entry := range parsed.Items {
 		description := entry.Content
@@ -121,21 +117,20 @@ func (s *PollingService) fetchItems(feed models.Feed) {
 			PublishedAt: published_at,
 		})
 	}
-	s.logger.Debug("Items for DB", slog.Any("items", items))
+	slog.Debug("Items for DB", slog.Any("items", items))
 
 	if err := s.itemRepo.CreateItems(feed.ID, items); err != nil {
-		s.logger.Error("Create items", "feed_url", feed.URL, "err", err)
+		slog.Error("Create items", "feed_url", feed.URL, "err", err)
 		return
 	}
 	msg := fmt.Sprintf(`{"feedId": %d}`, feed.ID)
-	s.logger.Info("Send item server event", "msg", msg)
 	s.itemSEEChannel <- msg
 }
 
 func (s *PollingService) RefreshAll() error {
 	feeds, err := s.feedRepo.GetAllFeeds()
 	if err != nil {
-		s.logger.Error("Refresh all feeds", "err", err)
+		slog.Error("Refresh all feeds", "err", err)
 		return err
 	}
 	for _, feed := range feeds {
@@ -147,7 +142,7 @@ func (s *PollingService) RefreshAll() error {
 func (s *PollingService) RefreshFeed(feed_id int) error {
 	feed, err := s.feedRepo.GetFeed(feed_id)
 	if err != nil {
-		s.logger.Error("Refresh feed", "feed_id", feed_id, "err", err)
+		slog.Error("Refresh feed", "feed_id", feed_id, "err", err)
 		return err
 	}
 	go s.fetchItems(feed)

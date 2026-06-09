@@ -12,7 +12,7 @@ func TestCreateFeed(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	feed, err := repo.CreateFeed("https://example.com/feed", "Example")
 	if err != nil {
@@ -31,7 +31,7 @@ func TestCreateFeed_DuplicateURL(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	original, err := repo.CreateFeed("https://example.com/feed", "Example")
 	if err != nil {
@@ -51,7 +51,7 @@ func TestCreateFeed_EmptyFields(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	_, err := repo.CreateFeed("", "")
 	if err != nil {

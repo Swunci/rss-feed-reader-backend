@@ -3,7 +3,6 @@ package repositories
 import (
 	"database/sql"
 	"fmt"
-	"log/slog"
 
 	"github.com/Swunci/rss-feed-backend/internal/models"
 )
@@ -11,14 +10,10 @@ import (
 type FeedRepo struct {
 	readDB  *sql.DB
 	writeDB *sql.DB
-	logger  *slog.Logger
 }
 
-func NewFeedRepo(readDB *sql.DB, writeDB *sql.DB, logger *slog.Logger) *FeedRepo {
-	if logger == nil {
-		logger = slog.Default()
-	}
-	return &FeedRepo{readDB: readDB, writeDB: writeDB, logger: logger}
+func NewFeedRepo(readDB *sql.DB, writeDB *sql.DB) *FeedRepo {
+	return &FeedRepo{readDB: readDB, writeDB: writeDB}
 }
 
 func (r *FeedRepo) CreateFeed(url, name string) (models.Feed, error) {

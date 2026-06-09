@@ -15,7 +15,7 @@ func TestCreateItems(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	items := []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -38,7 +38,7 @@ func TestCreateItems_Empty(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	err := repo.CreateItems(feed.ID, []models.Item{})
 	if err != nil {
@@ -51,7 +51,7 @@ func TestCreateItems_DuplicateLink(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	items := []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -76,7 +76,7 @@ func TestCreateItems_InvalidFeedID(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	err := repo.CreateItems(99999, []models.Item{
 		{FeedID: 99999, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},

@@ -14,7 +14,7 @@ func TestDeleteFeed(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	feed, err := repo.CreateFeed("https://example.com/feed", "Example")
 	if err != nil {
@@ -36,7 +36,7 @@ func TestDeleteFeed_NotFound(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	err := repo.DeleteFeed(999)
 	if err != nil {
@@ -48,8 +48,8 @@ func TestDeleteFeed_CascadesItems(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	feedRepo := NewFeedRepo(db, db, nil)
-	itemRepo := NewItemRepo(db, db, nil)
+	feedRepo := NewFeedRepo(db, db)
+	itemRepo := NewItemRepo(db, db)
 
 	feed, err := feedRepo.CreateFeed("https://example.com/feed", "Example")
 	if err != nil {

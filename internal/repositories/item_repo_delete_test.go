@@ -15,7 +15,7 @@ func TestDeleteItem(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	err := repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -45,7 +45,7 @@ func TestDeleteItem_NonExistent(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	err := repo.DeleteItem(999)
 	if err != nil {

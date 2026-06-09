@@ -2,7 +2,6 @@ package repositories
 
 import (
 	"database/sql"
-	"log/slog"
 
 	"github.com/Swunci/rss-feed-backend/internal/models"
 )
@@ -10,20 +9,15 @@ import (
 type CollectionRepo struct {
 	readDB  *sql.DB
 	writeDB *sql.DB
-	logger  *slog.Logger
 }
 
-func NewCollectionRepo(readDB *sql.DB, writeDB *sql.DB, logger *slog.Logger) *CollectionRepo {
-	if logger == nil {
-		logger = slog.Default()
-	}
-	return &CollectionRepo{readDB: readDB, writeDB: writeDB, logger: logger}
+func NewCollectionRepo(readDB *sql.DB, writeDB *sql.DB) *CollectionRepo {
+	return &CollectionRepo{readDB: readDB, writeDB: writeDB}
 }
 
 func (r *CollectionRepo) CreateCollection(name string) (models.Collection, error) {
 	_, err := r.writeDB.Exec("INSERT OR IGNORE INTO collections (name) VALUES (?)", name)
 	if err != nil {
-		r.logger.Error("Create Collection", "err", err)
 		return models.Collection{}, err
 	}
 

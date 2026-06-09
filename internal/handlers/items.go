@@ -13,11 +13,10 @@ import (
 
 type ItemHandler struct {
 	itemService *services.ItemService
-	logger      *slog.Logger
 }
 
-func NewItemHandler(s *services.ItemService, logger *slog.Logger) *ItemHandler {
-	return &ItemHandler{itemService: s, logger: logger}
+func NewItemHandler(s *services.ItemService) *ItemHandler {
+	return &ItemHandler{itemService: s}
 }
 
 func (h *ItemHandler) Get(w http.ResponseWriter, r *http.Request) {
@@ -29,8 +28,8 @@ func (h *ItemHandler) Get(w http.ResponseWriter, r *http.Request) {
 	}
 	item, err := h.itemService.GetItem(item_id)
 	if err != nil {
+		slog.Error("Fetch item", "item_id", item_id, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		println(err.Error())
 		return
 	}
 	WriteJSON(w, http.StatusOK, item)
@@ -39,15 +38,15 @@ func (h *ItemHandler) Get(w http.ResponseWriter, r *http.Request) {
 func (h *ItemHandler) GetAllItems(w http.ResponseWriter, r *http.Request) {
 	timestamp_cursor := r.URL.Query().Get("cursor")
 	filter := parseItemFilter(r)
-	h.logger.Info("Item filters", "read", filter.IsRead, "favorite", filter.IsFavorite)
+	slog.Debug("Item filters", "read", filter.IsRead, "favorite", filter.IsFavorite)
 
 	items, err := h.itemService.GetAllItems(filter, timestamp_cursor)
 	if err != nil {
+		slog.Error("Get all items", "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		println(err.Error())
 		return
 	}
-	h.logger.Info("Item count", "count", len(items))
+	slog.Debug("Items fetched", "count", len(items))
 	WriteJSON(w, http.StatusOK, items)
 }
 
@@ -56,20 +55,19 @@ func (h *ItemHandler) GetItemsByFeed(w http.ResponseWriter, r *http.Request) {
 	timestamp_cursor := r.URL.Query().Get("cursor")
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		println(err.Error())
 		return
 	}
 	filter := parseItemFilter(r)
-	h.logger.Info("Item filters", "feed_id", feed_id, "read", filter.IsRead, "favorite", filter.IsFavorite)
+	slog.Debug("Item filters", "feed_id", feed_id, "read", filter.IsRead, "favorite", filter.IsFavorite)
 
 	items, err := h.itemService.GetItemsByFeed(feed_id, filter, timestamp_cursor)
 
 	if err != nil {
+		slog.Error("Get items by feed", "feed_id", feed_id, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		println(err.Error())
 		return
 	}
-	h.logger.Info("Successful items retrieval", "num_of_items", len(items))
+	slog.Debug("Items fetched", "feed_id", feed_id, "count", len(items))
 	WriteJSON(w, http.StatusOK, items)
 }
 
@@ -81,16 +79,16 @@ func (h *ItemHandler) GetItemsByCollection(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	filter := parseItemFilter(r)
-	h.logger.Info("Item filters", "collection_id", collection_id, "read", filter.IsRead, "favorite", filter.IsFavorite)
+	slog.Debug("Item filters", "collection_id", collection_id, "read", filter.IsRead, "favorite", filter.IsFavorite)
 
 	items, err := h.itemService.GetItemsByCollection(collection_id, filter, timestamp_cursor)
 
 	if err != nil {
+		slog.Error("Get items by collection", "collection_id", collection_id, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		println(err.Error())
 		return
 	}
-	h.logger.Info("Successful items retrieval", "num_of_items", len(items))
+	slog.Debug("Items fetched", "collection_id", collection_id, "count", len(items))
 	WriteJSON(w, http.StatusOK, items)
 }
 
@@ -100,11 +98,11 @@ func (h *ItemHandler) MarkRead(w http.ResponseWriter, r *http.Request) {
 	decoding_err := json.NewDecoder(r.Body).Decode(&req)
 	if err != nil || decoding_err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		println(err.Error())
 		return
 	}
 	err = h.itemService.UpdateItemRead(item_id, req.IsRead)
 	if err != nil {
+		slog.Error("Mark item read", "item_id", item_id, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -115,12 +113,12 @@ func (h *ItemHandler) MarkAllRead(w http.ResponseWriter, r *http.Request) {
 	var req models.UpdateItemsMarkAllRequest
 	decoding_err := json.NewDecoder(r.Body).Decode(&req)
 	if decoding_err != nil {
-		h.logger.Error("Invalid JSON", "err", decoding_err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 	err := h.itemService.UpdateItemsRead(req.ItemIDs, req.IsRead)
 	if err != nil {
+		slog.Error("Mark all items read", "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -137,6 +135,7 @@ func (h *ItemHandler) MarkFavorite(w http.ResponseWriter, r *http.Request) {
 	}
 	err = h.itemService.UpdateItemFavorite(item_id, req.IsFavorite)
 	if err != nil {
+		slog.Error("Mark item favorite", "item_id", item_id, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

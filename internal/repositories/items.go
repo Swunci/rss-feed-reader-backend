@@ -13,14 +13,10 @@ import (
 type ItemRepo struct {
 	readDB  *sql.DB
 	writeDB *sql.DB
-	logger  *slog.Logger
 }
 
-func NewItemRepo(readDB *sql.DB, writeDB *sql.DB, logger *slog.Logger) *ItemRepo {
-	if logger == nil {
-		logger = slog.Default()
-	}
-	return &ItemRepo{readDB: readDB, writeDB: writeDB, logger: logger}
+func NewItemRepo(readDB *sql.DB, writeDB *sql.DB) *ItemRepo {
+	return &ItemRepo{readDB: readDB, writeDB: writeDB}
 }
 
 func (r *ItemRepo) CreateItems(feed_id int, items []models.Item) error {
@@ -49,7 +45,7 @@ func (r *ItemRepo) CreateItems(feed_id int, items []models.Item) error {
 		return err
 	}
 
-	r.logger.Info("Items created", "count", count)
+	slog.Debug("Items created", "count", count)
 	return err
 
 }
@@ -237,7 +233,7 @@ func (r *ItemRepo) UpdateRead(item_id int, is_read bool) error {
 	_, err := r.writeDB.Exec(
 		"UPDATE items SET is_read = ? WHERE id = ?", is_read, item_id,
 	)
-	r.logger.Info("Marked as read/unread", "id", item_id, "is_read", is_read)
+	slog.Debug("Marked as read/unread", "id", item_id, "is_read", is_read)
 	return err
 }
 
@@ -263,7 +259,7 @@ func (r *ItemRepo) UpdateFavorite(item_id int, is_favorite bool) error {
 	_, err := r.writeDB.Exec(
 		"UPDATE items SET is_favorite = ? WHERE id = ?", is_favorite, item_id,
 	)
-	r.logger.Info("Favorite/unfavorite", "id", item_id, "is_favorite", is_favorite)
+	slog.Debug("Favorite/unfavorite", "id", item_id, "is_favorite", is_favorite)
 	return err
 }
 

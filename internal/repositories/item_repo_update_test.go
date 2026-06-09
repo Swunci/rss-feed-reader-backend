@@ -14,7 +14,7 @@ func TestUpdateRead(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 	itemID := createTestItem(t, db)
 
 	t.Run("mark as read", func(t *testing.T) {
@@ -55,7 +55,7 @@ func TestUpdateFavorite(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 	itemID := createTestItem(t, db)
 
 	t.Run("mark as favorite", func(t *testing.T) {
@@ -97,7 +97,7 @@ func TestUpdateReadMultiple_MarkAsRead(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -126,7 +126,7 @@ func TestUpdateReadMultiple_MarkAsUnread(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -156,7 +156,7 @@ func TestUpdateReadMultiple_NonExistentIDs(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	err := repo.UpdateReadMultiple([]int{99999, 88888}, true)
 	if err != nil {
@@ -168,7 +168,7 @@ func TestUpdateReadMultiple_Empty(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	err := repo.UpdateReadMultiple([]int{}, true)
 	if err != nil {

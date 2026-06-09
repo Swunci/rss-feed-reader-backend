@@ -18,15 +18,15 @@ type DiscoverService struct {
 	feedRepo    *repositories.FeedRepo
 	itemRepo    *repositories.ItemRepo
 	feedService *FeedService
-	logger      *slog.Logger
 }
 
-func NewDiscoverService(fr *repositories.FeedRepo, ir *repositories.ItemRepo, is *FeedService, logger *slog.Logger) *DiscoverService {
-	return &DiscoverService{feedRepo: fr, itemRepo: ir, feedService: is, logger: logger}
+func NewDiscoverService(fr *repositories.FeedRepo, ir *repositories.ItemRepo, is *FeedService) *DiscoverService {
+	return &DiscoverService{feedRepo: fr, itemRepo: ir, feedService: is}
 }
 
 func (s *DiscoverService) DiscoverFeeds(url string) ([]models.DiscoverFeed, error) {
 	if isValidRSSLink(url) {
+		slog.Debug("Valid RSS link, skipping discovery", "url", url)
 		return []models.DiscoverFeed{}, nil
 	}
 	discovered_feeds := []models.DiscoverFeed{}
@@ -74,6 +74,7 @@ func extractChannelInfo(channelURL string) (YouTubeChannel, error) {
 	re := regexp.MustCompile(`(?:www\.)?youtube\.com/channel/(UC[\w-]+)`)
 	resp, err := http.Get(channelURL)
 	if err != nil {
+		slog.Error("Fetch YouTube channel", "url", channelURL, "err", err)
 		return YouTubeChannel{}, err
 	}
 	defer resp.Body.Close()
@@ -85,6 +86,7 @@ func extractChannelInfo(channelURL string) (YouTubeChannel, error) {
 
 	idMatch := re.FindSubmatch(body)
 	if len(idMatch) < 2 {
+		slog.Error("YouTube channel ID not found", "url", channelURL)
 		return YouTubeChannel{}, fmt.Errorf("channel ID not found")
 	}
 
@@ -123,7 +125,7 @@ func getYouTubeFeeds(channelURL string) ([]models.DiscoverFeed, error) {
 			feeds = append(feeds, o)
 		}
 	}
-
+	slog.Debug("YouTube feeds discovered", "channel", youtube_channel.Name, "count", len(feeds))
 	return feeds, nil
 }
 
@@ -181,6 +183,6 @@ func getRedditFeeds(redditURL string) ([]models.DiscoverFeed, error) {
 			})
 		}
 	}
-
+	slog.Debug("Reddit feeds discovered", "url", redditURL, "count", len(feeds))
 	return feeds, nil
 }

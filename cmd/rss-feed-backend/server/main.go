@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -22,7 +23,7 @@ func main() {
 	fmt.Println("Server running on :" + port)
 	server_err := http.ListenAndServe(":"+port, app.Router)
 	if server_err != nil {
-		fmt.Println(server_err)
+		slog.Error("Server Start", "err", server_err)
 	}
 
 }

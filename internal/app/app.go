@@ -24,6 +24,15 @@ type App struct {
 }
 
 func NewApp(serveStatic bool) *App {
+	var handler slog.Handler
+	if os.Getenv("APP_ENV") == "production" {
+		handler = slog.NewJSONHandler(os.Stdout, nil)
+	} else {
+		handler = slog.NewTextHandler(os.Stdout, nil)
+	}
+	logger := slog.New(handler)
+	slog.SetDefault(logger)
+
 	readDB, readDB_err := sql.Open("sqlite", getDBPath())
 	if readDB_err != nil {
 		panic(readDB_err)
@@ -43,18 +52,9 @@ func NewApp(serveStatic bool) *App {
 	configureSQLite(readDB)
 	configureSQLite(writeDB)
 
-	var handler slog.Handler
-	if os.Getenv("APP_ENV") == "production" {
-		handler = slog.NewJSONHandler(os.Stdout, nil)
-	} else {
-		handler = slog.NewTextHandler(os.Stdout, nil)
-	}
-	logger := slog.New(handler)
-	slog.SetDefault(logger)
-
-	feedRepo := repositories.NewFeedRepo(readDB, writeDB, logger)
-	itemRepo := repositories.NewItemRepo(readDB, writeDB, logger)
-	collectionRepo := repositories.NewCollectionRepo(readDB, writeDB, logger)
+	feedRepo := repositories.NewFeedRepo(readDB, writeDB)
+	itemRepo := repositories.NewItemRepo(readDB, writeDB)
+	collectionRepo := repositories.NewCollectionRepo(readDB, writeDB)
 
 	db_table_err := database.Migrate(writeDB)
 	if db_table_err != nil {
@@ -63,14 +63,14 @@ func NewApp(serveStatic bool) *App {
 
 	itemSEEChannel := make(chan string, 10)
 
-	feedService := services.NewFeedService(feedRepo, itemRepo, logger)
+	feedService := services.NewFeedService(feedRepo, itemRepo)
 	itemService := services.NewItemService(itemRepo)
-	discoverService := services.NewDiscoverService(feedRepo, itemRepo, feedService, logger)
+	discoverService := services.NewDiscoverService(feedRepo, itemRepo, feedService)
 	collectionService := services.NewCollectionService(collectionRepo)
-	pollingService := services.NewPollingService(feedRepo, itemRepo, logger, itemSEEChannel)
+	pollingService := services.NewPollingService(feedRepo, itemRepo, itemSEEChannel)
 
 	handlers := routes.Handlers{
-		Item:       handlers.NewItemHandler(itemService, logger),
+		Item:       handlers.NewItemHandler(itemService),
 		ItemSEE:    handlers.NewItemSSEHandler(itemSEEChannel),
 		Feed:       handlers.NewFeedHandler(feedService, pollingService, discoverService),
 		Collection: handlers.NewCollectionHandler(collectionService),

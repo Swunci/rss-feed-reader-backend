@@ -19,11 +19,10 @@ type FeedRepository interface {
 type FeedService struct {
 	feedRepo *repositories.FeedRepo
 	itemRepo *repositories.ItemRepo
-	logger   *slog.Logger
 }
 
-func NewFeedService(fr *repositories.FeedRepo, ir *repositories.ItemRepo, logger *slog.Logger) *FeedService {
-	return &FeedService{feedRepo: fr, itemRepo: ir, logger: logger}
+func NewFeedService(fr *repositories.FeedRepo, ir *repositories.ItemRepo) *FeedService {
+	return &FeedService{feedRepo: fr, itemRepo: ir}
 }
 
 func (s *FeedService) GetFeed(feed_id int) (models.Feed, error) {
@@ -36,13 +35,13 @@ func (s *FeedService) GetAllFeeds() ([]models.FeedResponse, error) {
 func (s *FeedService) GetAllUnread() ([]models.FeedResponse, error) {
 	feed_ids, err := s.itemRepo.GetUnreadItemsFeedIds()
 	if err != nil {
-		s.logger.Error("Get unread items' feed_ids", "err", err)
+		slog.Error("Get unread feed ids", "err", err)
 		return []models.FeedResponse{}, err
 	}
 
 	feeds, err := s.feedRepo.GetFeeds(feed_ids, models.FeedFilterUnread)
 	if err != nil {
-		s.logger.Error("Get feeds", "err", err)
+		slog.Error("Get unread feeds", "err", err)
 		return []models.FeedResponse{}, err
 	}
 	return feeds, nil
@@ -51,13 +50,13 @@ func (s *FeedService) GetAllUnread() ([]models.FeedResponse, error) {
 func (s *FeedService) GetAllFavorite() ([]models.FeedResponse, error) {
 	feed_ids, err := s.itemRepo.GetFavoriteItemsFeedIds()
 	if err != nil {
-		s.logger.Error("Get favorite items' feed_ids", "err", err)
+		slog.Error("Get favorite feed ids", "err", err)
 		return []models.FeedResponse{}, err
 	}
 
 	feeds, err := s.feedRepo.GetFeeds(feed_ids, models.FeedFilterFavorite)
 	if err != nil {
-		s.logger.Error("Get feeds", "err", err)
+		slog.Error("Get favorite feeds", "err", err)
 		return []models.FeedResponse{}, err
 	}
 	return feeds, nil
@@ -67,7 +66,7 @@ func (s *FeedService) CreateFeed(url, title string) (models.Feed, error) {
 	fp := gofeed.NewParser()
 	parsed, err := fp.ParseURL(url)
 	if err != nil {
-		s.logger.Error("Parse feed link", "feed_url", url, "err", err)
+		slog.Error("Parse feed link", "feed_url", url, "err", err)
 		return models.Feed{}, err
 	}
 	feed_title := parsed.Title

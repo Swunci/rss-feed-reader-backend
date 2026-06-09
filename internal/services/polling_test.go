@@ -2,8 +2,6 @@ package services
 
 import (
 	"errors"
-	"io"
-	"log/slog"
 	"testing"
 	"time"
 
@@ -34,10 +32,6 @@ func (m *mockItemRepo) CreateItems(feedID int, items []models.Item) error {
 	return m.err
 }
 
-func testLogger() *slog.Logger {
-	return slog.New(slog.NewTextHandler(io.Discard, nil))
-}
-
 func TestStart_StartsPollingForAllFeeds(t *testing.T) {
 	feedRepo := &mockFeedRepo{
 		feeds: []models.Feed{
@@ -46,7 +40,7 @@ func TestStart_StartsPollingForAllFeeds(t *testing.T) {
 		},
 	}
 	itemRepo := &mockItemRepo{}
-	svc := NewPollingService(feedRepo, itemRepo, testLogger(), make(chan string))
+	svc := NewPollingService(feedRepo, itemRepo, make(chan string))
 
 	svc.Start()
 	time.Sleep(100 * time.Millisecond)
@@ -62,7 +56,7 @@ func TestStart_StartsPollingForAllFeeds(t *testing.T) {
 func TestStart_ErrorGettingFeeds(t *testing.T) {
 	feedRepo := &mockFeedRepo{err: errors.New("db error")}
 	itemRepo := &mockItemRepo{}
-	svc := NewPollingService(feedRepo, itemRepo, testLogger(), make(chan string))
+	svc := NewPollingService(feedRepo, itemRepo, make(chan string))
 
 	svc.Start()
 
@@ -74,7 +68,7 @@ func TestStart_ErrorGettingFeeds(t *testing.T) {
 func TestStartFeed_StoresCancelFunc(t *testing.T) {
 	feedRepo := &mockFeedRepo{}
 	itemRepo := &mockItemRepo{}
-	svc := NewPollingService(feedRepo, itemRepo, testLogger(), make(chan string))
+	svc := NewPollingService(feedRepo, itemRepo, make(chan string))
 
 	feed := models.Feed{ID: 1, Name: "Feed 1", URL: "https://example.com/feed"}
 	svc.StartFeed(feed)
@@ -90,7 +84,7 @@ func TestStartFeed_StoresCancelFunc(t *testing.T) {
 func TestStopFeed_RemovesCancelFunc(t *testing.T) {
 	feedRepo := &mockFeedRepo{}
 	itemRepo := &mockItemRepo{}
-	svc := NewPollingService(feedRepo, itemRepo, testLogger(), make(chan string))
+	svc := NewPollingService(feedRepo, itemRepo, make(chan string))
 
 	feed := models.Feed{ID: 1, Name: "Feed 1", URL: "https://example.com/feed"}
 	svc.StartFeed(feed)
@@ -107,7 +101,7 @@ func TestStopFeed_RemovesCancelFunc(t *testing.T) {
 func TestStopFeed_NonExistent(t *testing.T) {
 	feedRepo := &mockFeedRepo{}
 	itemRepo := &mockItemRepo{}
-	svc := NewPollingService(feedRepo, itemRepo, testLogger(), make(chan string))
+	svc := NewPollingService(feedRepo, itemRepo, make(chan string))
 
 	svc.StopFeed(999) // should not panic
 }

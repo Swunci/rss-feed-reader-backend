@@ -12,7 +12,7 @@ func TestUpdateFeed(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	newURL := "https://new.com/feed"
 	newName := "New Name"
@@ -43,7 +43,7 @@ func TestUpdateFeed_NotFound(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	newName := "New Name"
 	err := repo.UpdateFeed(999, nil, &newName, nil)
@@ -56,7 +56,7 @@ func TestUpdateFeed_PartialUpdate(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	oldUrl := "https://example.com/feed"
 	oldName := "Example"
@@ -88,7 +88,7 @@ func TestUpdateFeed_NilBoth(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	feed, err := repo.CreateFeed("https://example.com/feed", "Example")
 	if err != nil {
@@ -116,7 +116,7 @@ func TestUpdateFeed_CollectionID(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	var collectionID int
 	err := db.QueryRow("INSERT INTO collections (name) VALUES (?) RETURNING id", "Test Collection").Scan(&collectionID)

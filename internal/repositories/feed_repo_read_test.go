@@ -14,7 +14,7 @@ func TestGetFeed(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	created, err := repo.CreateFeed("https://example.com/feed", "Example")
 	if err != nil {
@@ -40,7 +40,7 @@ func TestGetFeed_NotFound(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	_, err := repo.GetFeed(999)
 	if err == nil {
@@ -52,7 +52,7 @@ func TestGetAllFeeds(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 	repo.CreateFeed("https://example.com/feed", "Example")
 	repo.CreateFeed("https://other.com/feed", "Other")
 
@@ -69,7 +69,7 @@ func TestGetAllFeeds_Empty(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	feeds, err := repo.GetAllFeeds()
 	if err != nil {
@@ -84,8 +84,8 @@ func TestGetAllFeedsWithCount(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	feedRepo := NewFeedRepo(db, db, nil)
-	itemRepo := NewItemRepo(db, db, nil)
+	feedRepo := NewFeedRepo(db, db)
+	itemRepo := NewItemRepo(db, db)
 
 	feed, _ := feedRepo.CreateFeed("https://example.com/feed", "Example")
 	itemRepo.CreateItems(feed.ID, []models.Item{
@@ -109,7 +109,7 @@ func TestGetAllFeedsWithCount_Empty(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	feeds, err := repo.GetAllFeedsWithCount()
 	if err != nil {
@@ -124,7 +124,7 @@ func TestGetAllFeedsWithCount_NoItems(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 	repo.CreateFeed("https://example.com/feed", "Example")
 
 	feeds, err := repo.GetAllFeedsWithCount()
@@ -140,8 +140,8 @@ func TestGetAllFeedsWithCount_MultipleFeeds(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	feedRepo := NewFeedRepo(db, db, nil)
-	itemRepo := NewItemRepo(db, db, nil)
+	feedRepo := NewFeedRepo(db, db)
+	itemRepo := NewItemRepo(db, db)
 
 	feed1, _ := feedRepo.CreateFeed("https://example.com/feed", "Example")
 	feed2, _ := feedRepo.CreateFeed("https://other.com/feed", "Other")
@@ -178,8 +178,8 @@ func TestGetFeeds(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	feedRepo := NewFeedRepo(db, db, nil)
-	itemRepo := NewItemRepo(db, db, nil)
+	feedRepo := NewFeedRepo(db, db)
+	itemRepo := NewItemRepo(db, db)
 
 	feed1, _ := feedRepo.CreateFeed("https://example.com/feed", "Example")
 	feed2, _ := feedRepo.CreateFeed("https://other.com/feed", "Other")
@@ -207,8 +207,8 @@ func TestGetFeeds_FavoriteFilter(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	feedRepo := NewFeedRepo(db, db, nil)
-	itemRepo := NewItemRepo(db, db, nil)
+	feedRepo := NewFeedRepo(db, db)
+	itemRepo := NewItemRepo(db, db)
 
 	feed, _ := feedRepo.CreateFeed("https://example.com/feed", "Example")
 	itemRepo.CreateItems(feed.ID, []models.Item{
@@ -232,7 +232,7 @@ func TestGetFeeds_PartialMatch(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	feed, _ := repo.CreateFeed("https://example.com/feed", "Example")
 
@@ -249,7 +249,7 @@ func TestGetFeeds_Empty(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	repo := NewFeedRepo(db, db, nil)
+	repo := NewFeedRepo(db, db)
 
 	feeds, err := repo.GetFeeds([]int{}, models.FeedFilterUnread)
 	if err != nil {
@@ -264,8 +264,8 @@ func TestGetFeeds_UnreadFilter(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
 
-	feedRepo := NewFeedRepo(db, db, nil)
-	itemRepo := NewItemRepo(db, db, nil)
+	feedRepo := NewFeedRepo(db, db)
+	itemRepo := NewItemRepo(db, db)
 
 	feed, _ := feedRepo.CreateFeed("https://example.com/feed", "Example")
 	itemRepo.CreateItems(feed.ID, []models.Item{

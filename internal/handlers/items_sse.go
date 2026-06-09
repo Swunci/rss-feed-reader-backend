@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 )
 
@@ -27,6 +28,7 @@ func (h *ItemSSEHandler) ItemEvents(w http.ResponseWriter, r *http.Request) {
 		select {
 		case msg := <-h.itemSEEChannel:
 			fmt.Fprintf(w, "data: %s\n\n", msg)
+			slog.Debug("SSE event sent", "msg", msg)
 			flusher.Flush()
 		case <-r.Context().Done():
 			return

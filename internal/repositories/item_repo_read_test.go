@@ -17,7 +17,7 @@ func TestGetItem(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	items := []models.Item{
 		{
@@ -56,7 +56,7 @@ func TestGetItem(t *testing.T) {
 func TestGetItem_NotFound(t *testing.T) {
 	db := database.SetupTestDB(t)
 	defer db.Close()
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	_, err := repo.GetItem(999)
 	if err == nil {
@@ -72,7 +72,7 @@ func TestGetItemsByFeed(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	items := []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -97,7 +97,7 @@ func TestGetItemsByFeed_Empty(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	items, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
 	if err != nil {
@@ -113,7 +113,7 @@ func TestGetItemsByFeed_FilterIsRead(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	items := []models.Item{
 		{FeedID: feed.ID, Title: "Read Item", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -143,7 +143,7 @@ func TestGetItemsByFeed_FilterIsUnread(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	items := []models.Item{
 		{FeedID: feed.ID, Title: "Read Item", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -173,7 +173,7 @@ func TestGetItemsByFeed_FilterIsFavorite(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	items := []models.Item{
 		{FeedID: feed.ID, Title: "Favorited Item", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -203,7 +203,7 @@ func TestGetItemsByFeed_FilterIsNotFavorite(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	items := []models.Item{
 		{FeedID: feed.ID, Title: "Favorited Item", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -233,7 +233,7 @@ func TestGetItemsByFeed_FilterReadAndFavorite(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	items := []models.Item{
 		{FeedID: feed.ID, Title: "Read and Favorited", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -271,7 +271,7 @@ func TestGetItemsByFeed_Cursor(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	now := time.Now().UTC()
 	items := []models.Item{
@@ -361,7 +361,7 @@ func TestGetItemsByCollection(t *testing.T) {
 	collection := createTestCollection(t, db)
 	feed1 := createTestFeedWithCollection(t, db, collection.ID, "https://example.com/feed1")
 	feed2 := createTestFeedWithCollection(t, db, collection.ID, "https://example.com/feed2")
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	err := repo.CreateItems(feed1.ID, []models.Item{
 		{FeedID: feed1.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -390,7 +390,7 @@ func TestGetUnreadItemsFeedIds_ReturnsFeedIds(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	err := repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Unread Item", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -416,7 +416,7 @@ func TestGetUnreadItemsFeedIds_Empty(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Read Item", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -440,7 +440,7 @@ func TestGetUnreadItemsFeedIds_Distinct(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -461,7 +461,7 @@ func TestGetFavoriteItemsFeedIds_ReturnsFeedIds(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -488,7 +488,7 @@ func TestGetFavoriteItemsFeedIds_Empty(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -508,7 +508,7 @@ func TestGetFavoriteItemsFeedIds_Distinct(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Item 1", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -535,7 +535,7 @@ func TestGetItemsByFeed_LimitEnforced(t *testing.T) {
 	defer db.Close()
 
 	feed := createTestFeed(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	items := make([]models.Item, 55)
 	for i := range items {
@@ -562,7 +562,7 @@ func TestGetItemsByCollection_Empty(t *testing.T) {
 	defer db.Close()
 
 	collection := createTestCollection(t, db)
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	result, err := repo.GetItemsByCollection(collection.ID, models.ItemFilter{}, "")
 	if err != nil {
@@ -579,7 +579,7 @@ func TestGetItemsByCollection_Filter(t *testing.T) {
 
 	collection := createTestCollection(t, db)
 	feed := createTestFeedWithCollection(t, db, collection.ID, "https://example.com/feed")
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	repo.CreateItems(feed.ID, []models.Item{
 		{FeedID: feed.ID, Title: "Read Item", Link: "https://example.com/1", PublishedAt: time.Now().UTC()},
@@ -609,7 +609,7 @@ func TestGetItemsByCollection_Cursor(t *testing.T) {
 
 	collection := createTestCollection(t, db)
 	feed := createTestFeedWithCollection(t, db, collection.ID, "https://example.com/feed")
-	repo := NewItemRepo(db, db, nil)
+	repo := NewItemRepo(db, db)
 
 	now := time.Now().UTC()
 	repo.CreateItems(feed.ID, []models.Item{

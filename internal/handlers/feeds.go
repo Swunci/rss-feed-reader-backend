@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"log/slog"
 	"net/http"
 
 	"github.com/Swunci/rss-feed-backend/internal/models"
@@ -36,14 +37,15 @@ func (h *FeedHandler) GetFeed(w http.ResponseWriter, r *http.Request) {
 	feed_id, err := ParseID(chi.URLParam(r, "feed_id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		println(err.Error())
 		return
 	}
 	feed, err := h.feedService.GetFeed(feed_id)
 	if err != nil {
+		slog.Error("Fetch feed", "feed_id", feed_id, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
 	WriteJSON(w, http.StatusOK, feed)
 }
 
@@ -63,9 +65,11 @@ func (h *FeedHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err != nil {
+		slog.Error("Get all feeds", "filter", filter, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	slog.Debug("Feeds fetched", "filter", filter, "count", len(feeds))
 	WriteJSON(w, http.StatusOK, feeds)
 }
 
@@ -78,6 +82,7 @@ func (h *FeedHandler) Post(w http.ResponseWriter, r *http.Request) {
 
 	feed, err := h.feedService.CreateFeed(req.URL, req.Name)
 	if err != nil {
+		slog.Error("Create feed", "url", req.URL, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -88,6 +93,7 @@ func (h *FeedHandler) Post(w http.ResponseWriter, r *http.Request) {
 func (h *FeedHandler) RefreshFeeds(w http.ResponseWriter, r *http.Request) {
 	err := h.pollingService.RefreshAll()
 	if err != nil {
+		slog.Error("Refresh all feeds", "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -102,6 +108,7 @@ func (h *FeedHandler) RefreshFeed(w http.ResponseWriter, r *http.Request) {
 	}
 	err = h.pollingService.RefreshFeed(feed_id)
 	if err != nil {
+		slog.Error("Refresh feed", "feed_id", feed_id, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
@@ -120,8 +127,8 @@ func (h *FeedHandler) Patch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := h.feedService.UpdateFeed(feed_id, req.URL, req.Name, req.CollectionID); err != nil {
+		slog.Error("Update feed", "feed_id", feed_id, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		println(err.Error())
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -134,8 +141,8 @@ func (h *FeedHandler) UnassignCollection(w http.ResponseWriter, r *http.Request)
 		return
 	}
 	if err := h.feedService.RemoveFeedFromCollection(feed_id); err != nil {
+		slog.Error("Unassign collection", "feed_id", feed_id, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		println(err.Error())
 		return
 	}
 	w.WriteHeader(http.StatusOK)
@@ -145,12 +152,11 @@ func (h *FeedHandler) Delete(w http.ResponseWriter, r *http.Request) {
 	feed_id, err := ParseID(chi.URLParam(r, "feed_id"))
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		println(err.Error())
 		return
 	}
 	if err := h.feedService.DeleteFeed(feed_id); err != nil {
+		slog.Error("Delete feed", "feed_id", feed_id, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
-		println(err.Error())
 		return
 	}
 	h.pollingService.StopFeed(feed_id)
@@ -165,6 +171,7 @@ func (h *FeedHandler) Discover(w http.ResponseWriter, r *http.Request) {
 	}
 	feeds_options, err := h.discoverService.DiscoverFeeds(req.URL)
 	if err != nil {
+		slog.Error("Discover feeds", "url", req.URL, "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
