@@ -14,10 +14,10 @@ import (
 	"github.com/getlantern/systray"
 )
 
+const port = "7721"
+
 func main() {
 	app := app.NewApp(true)
-
-	const port = "7721"
 
 	go func() {
 		server_err := http.ListenAndServe(":"+port, app.Router)
@@ -33,14 +33,25 @@ func main() {
 }
 
 func onReady() {
-	systray.SetIcon(rssfeedbackend.Icon)
+	if runtime.GOOS == "darwin" {
+		systray.SetIcon(rssfeedbackend.MacIcon)
+	} else {
+		systray.SetIcon(rssfeedbackend.Icon)
+	}
 	systray.SetTitle("RSS Reader")
 	systray.SetTooltip("RSS Reader")
-	mQuit := systray.AddMenuItem("Quit", "Stop RSS Reader")
+	mOpen := systray.AddMenuItem("Open", "")
+	mQuit := systray.AddMenuItem("Quit", "")
 
 	go func() {
-		<-mQuit.ClickedCh
-		systray.Quit()
+		for {
+			select {
+			case <-mOpen.ClickedCh:
+				openBrowser("http://localhost:" + port)
+			case <-mQuit.ClickedCh:
+				systray.Quit()
+			}
+		}
 	}()
 }
 

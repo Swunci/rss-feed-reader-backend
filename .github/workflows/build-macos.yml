@@ -1,0 +1,88 @@
+name: Build macOS
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout backend
+        uses: actions/checkout@v4
+        with:
+          path: rss-feed-backend
+
+      - name: Checkout frontend
+        uses: actions/checkout@v4
+        with:
+          repository: Swunci/rss-feed-reader-frontend
+          path: rss-feed-frontend
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+
+      - name: Install frontend dependencies
+        run: npm install
+        working-directory: rss-feed-frontend
+
+      - name: Build frontend
+        run: npm run build:desktop
+        working-directory: rss-feed-frontend
+
+      - name: Copy frontend dist
+        run: |
+          mkdir -p ./frontend/dist
+          cp -r ../rss-feed-frontend/dist ./frontend/dist
+        working-directory: rss-feed-backend
+
+      - name: Build macOS amd64
+        run: CGO_ENABLED=1 GOOS=darwin GOARCH=amd64 go build -o rss-reader-macos ./cmd/rss-feed-backend/desktop
+        working-directory: rss-feed-backend
+
+      - name: Package macOS amd64
+        run: |
+          chmod +x macos_package.sh
+          ./macos_package.sh 1.0 rss-reader-macos .
+        working-directory: rss-feed-backend
+
+      - name: Zip amd64 bundle
+        run: zip -r "RSS-Reader-macos-amd64.zip" "RSS Reader.app"
+        working-directory: rss-feed-backend
+
+      - name: Clean app bundle
+        run: rm -rf "RSS Reader.app"
+        working-directory: rss-feed-backend
+
+      - name: Build macOS arm64
+        run: CGO_ENABLED=1 GOOS=darwin GOARCH=arm64 go build -o rss-reader-macos-arm ./cmd/rss-feed-backend/desktop
+        working-directory: rss-feed-backend
+
+      - name: Package macOS arm64
+        run: |
+          chmod +x macos_package.sh
+          ./macos_package.sh 1.0 rss-reader-macos-arm .
+        working-directory: rss-feed-backend
+
+      - name: Zip arm64 bundle
+        run: zip -r "RSS-Reader-macos-arm64.zip" "RSS Reader.app"
+        working-directory: rss-feed-backend
+
+      - name: Upload amd64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rss-reader-macos-amd64
+          path: rss-feed-backend/RSS-Reader-macos-amd64.zip
+
+      - name: Upload arm64 artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: rss-reader-macos-arm64
+          path: rss-feed-backend/RSS-Reader-macos-arm64.zip
