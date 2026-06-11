@@ -19,7 +19,7 @@ A REST API backend for storing and organizing RSS feeds, their items (articles),
 
 1. Clone the repository:
 ```bash
-   git clone https://github.com/Swunci/rss-feed-backend.git
+   git clone https://github.com/Swunci/rss-feed-reader-backend.git
    cd rss-feed-backend
 ```
 
@@ -45,7 +45,7 @@ The server will be available at `http://localhost:8082`.
 docker compose up --build -d
 ```
 
-**[Frontend](https://github.com/Swunci/rss-feed-frontend) + Backend**
+**[Frontend](https://github.com/Swunci/rss-feed-reader-frontend) + Backend**
 
 1. Create a `.env.production` file based on `.env.production-example`.
 
@@ -62,8 +62,8 @@ The backend will be available at `http://localhost:38473` and the frontend at `h
 
 1. Clone both repositories into the same parent directory:
 ```bash
-git clone https://github.com/Swunci/rss-feed-backend.git
-git clone https://github.com/Swunci/rss-feed-frontend.git
+git clone https://github.com/Swunci/rss-feed-reader-backend.git
+git clone https://github.com/Swunci/rss-feed-reader-frontend.git
 ```
 
 2. From the backend directory, build the `.exe`:
