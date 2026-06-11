@@ -37,10 +37,20 @@ func (h *ItemHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 func (h *ItemHandler) GetAllItems(w http.ResponseWriter, r *http.Request) {
 	timestamp_cursor := r.URL.Query().Get("cursor")
+	limit := 0
+	if l := r.URL.Query().Get("limit"); l != "" {
+		parsed, err := strconv.Atoi(l)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		limit = parsed
+	}
+
 	filter := parseItemFilter(r)
 	slog.Debug("Item filters", "read", filter.IsRead, "favorite", filter.IsFavorite)
 
-	items, err := h.itemService.GetAllItems(filter, timestamp_cursor)
+	items, err := h.itemService.GetAllItems(filter, timestamp_cursor, limit)
 	if err != nil {
 		slog.Error("Get all items", "err", err)
 		w.WriteHeader(http.StatusInternalServerError)
@@ -57,10 +67,20 @@ func (h *ItemHandler) GetItemsByFeed(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	limit := 0
+	if l := r.URL.Query().Get("limit"); l != "" {
+		parsed, err := strconv.Atoi(l)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		limit = parsed
+	}
+
 	filter := parseItemFilter(r)
 	slog.Debug("Item filters", "feed_id", feed_id, "read", filter.IsRead, "favorite", filter.IsFavorite)
 
-	items, err := h.itemService.GetItemsByFeed(feed_id, filter, timestamp_cursor)
+	items, err := h.itemService.GetItemsByFeed(feed_id, filter, timestamp_cursor, limit)
 
 	if err != nil {
 		slog.Error("Get items by feed", "feed_id", feed_id, "err", err)
@@ -78,10 +98,19 @@ func (h *ItemHandler) GetItemsByCollection(w http.ResponseWriter, r *http.Reques
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
+	limit := 0
+	if l := r.URL.Query().Get("limit"); l != "" {
+		parsed, err := strconv.Atoi(l)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		limit = parsed
+	}
 	filter := parseItemFilter(r)
 	slog.Debug("Item filters", "collection_id", collection_id, "read", filter.IsRead, "favorite", filter.IsFavorite)
 
-	items, err := h.itemService.GetItemsByCollection(collection_id, filter, timestamp_cursor)
+	items, err := h.itemService.GetItemsByCollection(collection_id, filter, timestamp_cursor, limit)
 
 	if err != nil {
 		slog.Error("Get items by collection", "collection_id", collection_id, "err", err)

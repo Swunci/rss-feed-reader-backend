@@ -32,7 +32,7 @@ func TestDeleteItem(t *testing.T) {
 		t.Fatalf("expected no error, got %v", err)
 	}
 
-	result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
+	result, err := repo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "", 0)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
+	"strconv"
 	"time"
 
 	"github.com/Swunci/rss-feed-backend/internal/models"
@@ -63,7 +65,11 @@ func (s *PollingService) StopFeed(feed_id int) {
 }
 
 func (s *PollingService) pollFeed(feed models.Feed, ctx context.Context) {
-	interval := time.Duration(15) * time.Minute
+	minutes, err := strconv.Atoi(os.Getenv("POLLING_INTERVAL_MINUTES"))
+	if err != nil {
+		minutes = 15
+	}
+	interval := time.Duration(minutes) * time.Minute
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	slog.Info("Polling start", "feed_url", feed.URL, "feed_id", feed.ID)
@@ -109,15 +115,21 @@ func (s *PollingService) fetchItems(feed models.Feed) {
 		if entry.PublishedParsed != nil {
 			published_at = entry.PublishedParsed.UTC()
 		}
-		items = append(items, models.Item{
+		item := models.Item{
 			FeedID:      feed.ID,
 			Title:       title,
 			Link:        entry.Link,
 			Description: description,
 			PublishedAt: published_at,
-		})
+		}
+		items = append(items, item)
+		slog.Debug("Item for DB",
+			slog.String("title", item.Title),
+			slog.String("link", item.Link),
+			slog.Time("published_at", item.PublishedAt),
+		)
+
 	}
-	slog.Debug("Items for DB", slog.Any("items", items))
 
 	if err := s.itemRepo.CreateItems(feed.ID, items); err != nil {
 		slog.Error("Create items", "feed_url", feed.URL, "err", err)

@@ -83,7 +83,7 @@ func TestDeleteFeed_CascadesItems(t *testing.T) {
 		t.Fatalf("expected no error deleting feed, got %v", err)
 	}
 
-	remainingItems, err := itemRepo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
+	remainingItems, err := itemRepo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "", 0)
 	if err != nil {
 		t.Fatalf("expected no error fetching items, got %v", err)
 	}

@@ -216,7 +216,7 @@ func TestGetFeeds_FavoriteFilter(t *testing.T) {
 		{FeedID: feed.ID, Title: "Item 2", Link: "https://example.com/item2", Description: "desc", PublishedAt: time.Now()},
 	})
 
-	items, _ := itemRepo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
+	items, _ := itemRepo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "", 0)
 	itemRepo.UpdateFavorite(items[0].ID, true)
 
 	feeds, err := feedRepo.GetFeeds([]int{feed.ID}, models.FeedFilterFavorite)
@@ -273,7 +273,7 @@ func TestGetFeeds_UnreadFilter(t *testing.T) {
 		{FeedID: feed.ID, Title: "Item 2", Link: "https://example.com/item2", Description: "desc", PublishedAt: time.Now()},
 	})
 
-	items, _ := itemRepo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "")
+	items, _ := itemRepo.GetItemsByFeed(feed.ID, models.ItemFilter{}, "", 0)
 	itemRepo.UpdateRead(items[0].ID, true)
 
 	feeds, err := feedRepo.GetFeeds([]int{feed.ID}, models.FeedFilterUnread)

@@ -72,7 +72,7 @@ func (r *ItemRepo) GetItem(item_id int) (models.Item, error) {
 	return item, nil
 }
 
-func (r *ItemRepo) GetAllItems(filter models.ItemFilter, timestamp_cursor string) ([]models.Item, error) {
+func (r *ItemRepo) GetAllItems(filter models.ItemFilter, timestamp_cursor string, limit int) ([]models.Item, error) {
 	query := `SELECT * FROM items WHERE 1=1`
 	args := []any{}
 	query, args, err := ApplyItemFilters(query, args, filter, timestamp_cursor)
@@ -81,7 +81,10 @@ func (r *ItemRepo) GetAllItems(filter models.ItemFilter, timestamp_cursor string
 	}
 	query += ` ORDER BY published_at DESC`
 
-	query += ` LIMIT 50`
+	if limit > 0 {
+		query += fmt.Sprintf(` LIMIT %d`, limit)
+	}
+
 	rows, err := r.readDB.Query(query, args...)
 	if err != nil {
 		return nil, err
@@ -109,7 +112,7 @@ func (r *ItemRepo) GetAllItems(filter models.ItemFilter, timestamp_cursor string
 	return items, nil
 }
 
-func (r *ItemRepo) GetItemsByFeed(feed_id int, filter models.ItemFilter, timestamp_cursor string) ([]models.Item, error) {
+func (r *ItemRepo) GetItemsByFeed(feed_id int, filter models.ItemFilter, timestamp_cursor string, limit int) ([]models.Item, error) {
 	query := `SELECT * FROM items WHERE feed_id = ?`
 	args := []any{feed_id}
 	query, args, err := ApplyItemFilters(query, args, filter, timestamp_cursor)
@@ -119,7 +122,9 @@ func (r *ItemRepo) GetItemsByFeed(feed_id int, filter models.ItemFilter, timesta
 
 	query += ` ORDER BY published_at DESC`
 
-	query += ` LIMIT 50`
+	if limit > 0 {
+		query += fmt.Sprintf(` LIMIT %d`, limit)
+	}
 	rows, err := r.readDB.Query(query, args...)
 	if err != nil {
 		return nil, err
@@ -147,7 +152,7 @@ func (r *ItemRepo) GetItemsByFeed(feed_id int, filter models.ItemFilter, timesta
 	return items, nil
 }
 
-func (r *ItemRepo) GetItemsByCollection(collection_id int, filter models.ItemFilter, timestamp_cursor string) ([]models.Item, error) {
+func (r *ItemRepo) GetItemsByCollection(collection_id int, filter models.ItemFilter, timestamp_cursor string, limit int) ([]models.Item, error) {
 	query := `SELECT items.* FROM items 
 			  JOIN feeds ON items.feed_id = feeds.id 
 			  WHERE feeds.collection_id = ?`
@@ -159,7 +164,9 @@ func (r *ItemRepo) GetItemsByCollection(collection_id int, filter models.ItemFil
 
 	query += ` ORDER BY published_at DESC`
 
-	query += ` LIMIT 50`
+	if limit > 0 {
+		query += fmt.Sprintf(` LIMIT %d`, limit)
+	}
 	rows, err := r.readDB.Query(query, args...)
 	if err != nil {
 		return nil, err

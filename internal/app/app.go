@@ -28,7 +28,9 @@ func NewApp(serveStatic bool) *App {
 	if os.Getenv("APP_ENV") == "production" {
 		handler = slog.NewJSONHandler(os.Stdout, nil)
 	} else {
-		handler = slog.NewTextHandler(os.Stdout, nil)
+		handler = slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+			Level: slog.LevelDebug,
+		})
 	}
 	logger := slog.New(handler)
 	slog.SetDefault(logger)
