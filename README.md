@@ -19,18 +19,18 @@ A REST API backend for storing and organizing RSS feeds, their items (articles),
 
 1. Clone the repository:
 ```bash
-   git clone https://github.com/Swunci/rss-feed-reader-backend.git
-   cd rss-feed-backend
+git clone https://github.com/Swunci/rss-feed-reader-backend.git
+cd rss-feed-backend
 ```
 
 2. Copy the example env file and configure it:
 ```bash
-   cp .env.example .env
+cp .env-example .env
 ```
 
 3. Run the server:
 ```bash
-   go run ./cmd/rss-feed-backend/server/main.go
+go run ./cmd/rss-feed-backend/server/main.go
 ```
 
 The server will be available at `http://localhost:8082`.
@@ -47,11 +47,15 @@ docker compose up --build -d
 
 **[Frontend](https://github.com/Swunci/rss-feed-reader-frontend) + Backend**
 
-1. Create a `.env.production` file based on `.env.production-example`.
+1. Create the production env file:
+
+```bash
+cp .env.production-example .env.production
+```
 
 2. Start all services:
 ```bash
-   docker compose -p rss-feed-reader -f compose-fullstack-app.yaml up -d
+docker compose -p rss-feed-reader -f compose-fullstack-app.yaml up -d
 ```
 
 The backend will be available at `http://localhost:38473` and the frontend at `http://localhost:38472`.
