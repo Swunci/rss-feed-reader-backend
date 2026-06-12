@@ -5,9 +5,7 @@ import (
 	"log/slog"
 	"net/http"
 	"os"
-	"strings"
 
-	"github.com/rs/cors"
 	_ "modernc.org/sqlite"
 
 	"github.com/Swunci/rss-feed-backend/internal/database"
@@ -79,19 +77,13 @@ func NewApp(serveStatic bool) *App {
 	}
 
 	router := routes.MainRouter(&handlers, serveStatic)
-	origins := strings.Split(os.Getenv("ALLOWED_ORIGINS"), ",")
-	c := cors.New(cors.Options{
-		AllowedOrigins:   origins,
-		AllowedMethods:   []string{"GET", "POST", "PUT", "PATCH", "DELETE"},
-		AllowedHeaders:   []string{"Origin", "Content-Type", "Authorization"},
-		AllowCredentials: true,
-	})
+
 	pollingService.Start()
 
 	return &App{
 		ReadDB:  readDB,
 		WriteDB: writeDB,
-		Router:  c.Handler(router),
+		Router:  router,
 	}
 }
 

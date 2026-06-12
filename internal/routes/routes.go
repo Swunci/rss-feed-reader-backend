@@ -21,9 +21,11 @@ type Handlers struct {
 func MainRouter(h *Handlers, serveStatic bool) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.Logger)
-	r.Mount("/feeds", FeedRoutes(h))
-	r.Mount("/items", ItemRoutes(h))
-	r.Mount("/collections", CollectionRoutes(h))
+	r.Route("/api", func(api chi.Router) {
+		api.Mount("/feeds", FeedRoutes(h))
+		api.Mount("/items", ItemRoutes(h))
+		api.Mount("/collections", CollectionRoutes(h))
+	})
 
 	if serveStatic {
 		publicFS, err := fs.Sub(rssfeedbackend.FrontendAssets, "frontend/dist")

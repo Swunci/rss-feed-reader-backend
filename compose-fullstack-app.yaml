@@ -1,8 +1,18 @@
 services:
+  caddy:
+    image: caddy:latest
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - backend
+      - frontend
   backend:
     image: swunci/rss-feed-backend:latest
-    ports:
-      - "38473:8081"
+    expose:
+      - 8081
     environment:
       - APP_ENV=production
     env_file:
@@ -12,5 +22,5 @@ services:
 
   frontend:
     image: swunci/rss-feed-frontend:latest
-    ports:
-      - "38472:80"
+    expose:
+      - 8080
