@@ -45,6 +45,8 @@ The server will be available at `http://localhost:8082`.
 docker compose up --build -d
 ```
 
+The backend will be available at `http://localhost:8081`.
+
 **[Frontend](https://github.com/Swunci/rss-feed-reader-frontend) + Backend**
 
 1. Create the production env file:
@@ -53,12 +55,18 @@ docker compose up --build -d
 cp .env.production-example .env.production
 ```
 
-2. Start all services:
+2. (Linux only) Create the database directory and set permissions:
+
+```bash
+mkdir -p db-data && chown -R 10001:10001 db-data
+```
+
+3. Start all services:
 ```bash
 docker compose -p rss-feed-reader -f compose-fullstack-app.yaml up -d
 ```
 
-The backend will be available at `http://localhost:38473` and the frontend at `http://localhost:38472`.
+The app will be available at `http://localhost` or at your server's IP address.
 
 ---
 
