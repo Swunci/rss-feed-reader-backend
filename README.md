@@ -55,13 +55,20 @@ The backend will be available at `http://localhost:8081`.
 cp .env.production-example .env.production
 ```
 
-2. (Linux only) Create the database directory and set permissions:
+2. Set up Caddy and start it:
+
+```bash
+cp Caddyfile-example Caddyfile
+docker compose -p caddy -f compose-caddy.yaml up -d
+```
+
+3. (Linux only) Create the database directory and set permissions:
 
 ```bash
 mkdir -p db-data && chown -R 10001:10001 db-data
 ```
 
-3. Start all services:
+3. Start frontend and backend:
 ```bash
 docker compose -p rss-feed-reader -f compose-fullstack-app.yaml up -d
 ```

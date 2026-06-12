@@ -1,0 +1,18 @@
+:80 {
+    handle /api* {
+        reverse_proxy backend:8081
+    }
+
+    handle {
+        reverse_proxy frontend:80
+    }
+}
+
+# myapp.example.com {
+#     handle /api/* {
+#         reverse_proxy backend:3000
+#     }
+#     handle {
+#         reverse_proxy frontend:80
+#     }
+# }

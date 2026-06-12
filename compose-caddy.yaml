@@ -1,0 +1,15 @@
+services:
+  caddy:
+    image: caddy:latest
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    networks:
+      - caddy-network
+
+networks:
+  caddy-network:
+    name: caddy-network
+    driver: bridge

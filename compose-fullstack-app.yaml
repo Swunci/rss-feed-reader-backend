@@ -1,14 +1,4 @@
 services:
-  caddy:
-    image: caddy:latest
-    ports:
-      - 80:80
-      - 443:443
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
-    depends_on:
-      - backend
-      - frontend
   backend:
     image: swunci/rss-feed-backend:latest
     expose:
@@ -19,8 +9,17 @@ services:
       - ./.env.production
     volumes:
       - ./db-data:/app/data
+    networks:
+      - caddy-network
 
   frontend:
     image: swunci/rss-feed-frontend:latest
     expose:
-      - 8080
+      - 80
+    networks:
+      - caddy-network
+
+networks:
+  caddy-network:
+    name: caddy-network
+    external: true
