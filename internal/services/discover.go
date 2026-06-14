@@ -25,6 +25,9 @@ func NewDiscoverService(fr *repositories.FeedRepo, ir *repositories.ItemRepo, is
 }
 
 func (s *DiscoverService) DiscoverFeeds(url string) ([]models.DiscoverFeed, error) {
+	if !strings.HasPrefix(url, "http://") && !strings.HasPrefix(url, "https://") {
+		url = "https://" + url
+	}
 	if isValidRSSLink(url) {
 		slog.Debug("Valid RSS link, skipping discovery", "url", url)
 		return []models.DiscoverFeed{}, nil
@@ -42,6 +45,9 @@ func (s *DiscoverService) DiscoverFeeds(url string) ([]models.DiscoverFeed, erro
 }
 
 func isValidRSSLink(url string) bool {
+	if isRedditURL(url) {
+		url = url + "?user=Positive_Ear1287&feed=fa6c8aa5fdc3af2f011b2cdc6cec7be7ec664436"
+	}
 	fp := gofeed.NewParser()
 	_, err := fp.ParseURL(url)
 	return err == nil

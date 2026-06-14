@@ -63,6 +63,9 @@ func (s *FeedService) GetAllFavorite() ([]models.FeedResponse, error) {
 }
 
 func (s *FeedService) CreateFeed(url, title string) (models.Feed, error) {
+	if isRedditURL(url) {
+		url = url + "?user=Positive_Ear1287&feed=fa6c8aa5fdc3af2f011b2cdc6cec7be7ec664436"
+	}
 	fp := gofeed.NewParser()
 	parsed, err := fp.ParseURL(url)
 	if err != nil {
