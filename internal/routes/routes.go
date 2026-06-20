@@ -20,6 +20,7 @@ type Handlers struct {
 
 func MainRouter(h *Handlers, serveStatic bool) http.Handler {
 	r := chi.NewRouter()
+	r.Use(middleware.Compress(5))
 	r.Use(middleware.Logger)
 	r.Route("/api", func(api chi.Router) {
 		api.Mount("/feeds", FeedRoutes(h))
